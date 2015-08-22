@@ -29,6 +29,7 @@
 'use strict';
 
 var Game = function(resizer) {
+    this.resizer = resizer;
     this.canvas = resizer.getCanvas();
     this.gl = glUtils.initGl(this.canvas, {}, 4);
     var gl = this.gl;
@@ -39,12 +40,14 @@ var Game = function(resizer) {
     gl.enableVertexAttribArray(1);
     SoftBodyRenderer.loadShaders(gl);
     Sprite.gl = gl;
-    /*this.canvasUI = new CanvasUI({
+    
+    var that = this;
+    this.canvasUI = new CanvasUI({
         element: this.canvas,
         getCanvasPositionFromEvent: function(event) {
-            return resizer.getCanvasPosition(event);
+            return that.getWorldPosition(event);
         }
-    });*/
+    });
     this.time = 0;
     this.testSoftBodyRenderer = new SoftBodyRenderer(gl, 'test.png');
 };
@@ -86,9 +89,15 @@ Game.prototype.render = function(ctx) {
             }
         ]
     };
+    this.testSoftBodyRenderer.render(testGrid, this.getWorldTransform(ctx.canvas));
+    
+    return ctx;
+};
+
+Game.prototype.getWorldTransform = function(canvas) {
     var scale = 0.2;
     var scaleX = scale;
-    var scaleY = scale * ctx.canvas.width / ctx.canvas.height;
+    var scaleY = scale * canvas.width / canvas.height;
     var translateX = 0.0;
     var translateY = 0.0 * scaleY / scaleX;
     var worldTransform = [
@@ -97,9 +106,17 @@ Game.prototype.render = function(ctx) {
         0, 0, 1, 0,
         translateX, translateY, 0, 1
     ];
-    this.testSoftBodyRenderer.render(testGrid, worldTransform);
-    
-    return ctx;
+    return worldTransform;
+};
+
+Game.prototype.getWorldPosition = function(event) {
+    var canvasPos = this.resizer.getCanvasPosition(event);
+    var glNormPos = new Vec2(canvasPos.x / this.resizer.canvas.width * 2.0 - 1.0, -canvasPos.y / this.resizer.canvas.height * 2.0 + 1.0);
+    var worldTransform = this.getWorldTransform(this.resizer.canvas);
+    var glToWorldTransform = glUtils.matrixInverse(worldTransform);
+    glNormPos.x = glNormPos.x * glToWorldTransform[0] + glToWorldTransform[12];
+    glNormPos.y = glNormPos.y * glToWorldTransform[5] + glToWorldTransform[13];
+    return glNormPos;
 };
 
 Game.prototype.update = function(deltaTime) {
