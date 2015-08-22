@@ -176,7 +176,7 @@ GamePhysics.prototype.generateMesh = function(obj) {
         ]
     };
 
-    for (var i = 0; i < grid.positions; ++i) {
+    for (var i = 0; i < grid.positions.length; ++i) {
         var point = grid.positions[i];
         var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.8+0.05*i)];
         var state = new State(i, point, springs);
