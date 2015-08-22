@@ -30,9 +30,13 @@
 
 var Game = function(resizer) {
     this.canvas = resizer.getCanvas();
-    this.gl = this.canvas.getContext('webgl');
-    SoftBodyRenderer.loadShaders(this.gl);
-    Sprite.gl = this.gl;
+    this.gl = glUtils.initGl(this.canvas, {}, 4);
+    var gl = this.gl;
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    SoftBodyRenderer.loadShaders(gl);
+    Sprite.gl = gl;
     /*this.canvasUI = new CanvasUI({
         element: this.canvas,
         getCanvasPositionFromEvent: function(event) {
@@ -40,6 +44,7 @@ var Game = function(resizer) {
         }
     });*/
     this.time = 0;
+    this.testSoftBodyRenderer = new SoftBodyRenderer(gl, 'test.png');
 };
 
 Game.prototype.render = function(ctx) {
@@ -52,6 +57,35 @@ Game.prototype.render = function(ctx) {
     var gl = ctx;
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    
+    var testGrid = {
+        width: 1,
+        height: 1,
+        positions: [
+            {
+                x: -0.5,
+                y: 0.5,
+                radius: 0.1
+            },
+            {
+                x: -0.5 + Math.sin(this.time) * 0.1,
+                y: -0.5,
+                radius: 0.1
+            },
+            {
+                x: 0.5,
+                y: 0.5,
+                radius: 0.1
+            },
+            {
+                x: 0.5,
+                y: -0.5,
+                radius: 0.1
+            }
+        ]
+    };
+    this.testSoftBodyRenderer.render(testGrid);
+    
     return ctx;
 };
 
