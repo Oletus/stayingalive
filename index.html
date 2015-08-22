@@ -20,11 +20,13 @@
 <script src="inputmapper.js"></script>
 
 <script src="mainloop.js"></script>
+<script src="vec.js"></script>
 <script src="util2d.js"></script>
 <script src="utiljs.js"></script>
 <script src="utilgl.js"></script>
 <script src="tilemap.js"></script>
 <script src="softbodyrenderer.js"></script>
+<script src="physics.js"></script>
 <script>
 'use strict';
 
@@ -86,7 +88,7 @@ Game.prototype.render = function(ctx) {
             }
         ]
     };
-    this.testSoftBodyRenderer.render(testGrid);
+    //this.testSoftBodyRenderer.render(testGrid);
     
     return ctx;
 };
@@ -103,7 +105,8 @@ var start = function() {
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
     var game = new Game(resizer);
-    startMainLoop([resizer, game], {debugMode: DEBUG_MAIN_LOOP});
+    var physics = new GamePhysics(resizer);
+    startMainLoop([resizer, game, physics], {debugMode: DEBUG_MAIN_LOOP});
 };
 </script>
 </head>
