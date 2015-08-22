@@ -8,6 +8,12 @@ var CVec = function(x, y) {
     this.y = y ? y : 0;
 }
 
+CVec.prototype.set = function(other) {
+    this.x = other.x;
+    this.y = other.y;
+    return this;
+}
+
 CVec.prototype.isub = function(other) {
     this.x -= other.x;
     this.y -= other.y;
