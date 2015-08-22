@@ -17,6 +17,10 @@ var State = function(inertia, point, springs, position, momentum) {
     this.springs = springs;
 };
 
+State.prototype.copy = function() {
+    return new State(this.inertia, this.point, this.springs, this.position, this.momentum);
+}
+
 /**
  * Holds the intermediate state for the integration
  */
@@ -51,14 +55,9 @@ Derivative.prototype.imul = function(scalar) {
     return this;
 }
 
-State.prototype.add = function(derivative) {
-    return new State(
-    	this.inertia,
-        this.point,
-        this.springs,
-        this.position.add(derivative.dx),
-        this.momentum.add(derivative.dp)
-    )
+State.prototype.iadd = function(derivative) {
+    this.position.iadd(derivative.dx),
+    this.momentum.iadd(derivative.dp)
 }
 
 var acceleration = function(state) {
@@ -73,7 +72,7 @@ var acceleration = function(state) {
 }
 
 var evaluate = function(initial, dt, derivative) {
-    var state = initial.add(derivative.mul(dt));
+    var state = initial.copy().iadd(derivative.mul(dt));
 
     var derivative = new Derivative(
         state.momentum.div(state.inertia),
