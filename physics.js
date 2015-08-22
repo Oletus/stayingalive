@@ -6,7 +6,7 @@ var Spring = function(point, stiffness, damping) {
     this.damping = damping ? damping : 0.25;
 }
 
-var State = function(inertia, position, momentum, point, springs) {
+var State = function(inertia, point, springs, position, momentum) {
     this.inertia = inertia ? inertia : 1;
     this.position = position ? position : new CVec(0,0);
     this.momentum = momentum ? momentum : new CVec(0,0);
@@ -54,10 +54,10 @@ Derivative.prototype.imul = function(scalar) {
 State.prototype.add = function(derivative) {
     return new State(
     	this.inertia,
-        this.position.add(derivative.dx),
-        this.momentum.add(derivative.dp),
         this.point,
-        this.springs
+        this.springs,
+        this.position.add(derivative.dx),
+        this.momentum.add(derivative.dp)
     )
 }
 
@@ -137,8 +137,8 @@ var GamePhysics = function(resizer) {
 
     for (var i = 0; i < 4; ++i) {
         var point = this.testGrid.positions[i];
-        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.6+0.05*i)];
-        var state = new State(i, new CVec(), new CVec(), point, springs);
+        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.8+0.05*i)];
+        var state = new State(i, point, springs);
         this.states.push(state);
     }
 };
