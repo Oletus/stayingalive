@@ -6,12 +6,15 @@ var Spring = function(point, stiffness, damping) {
     this.damping = damping ? damping : 0.25;
 }
 
-var State = function(inertia, position, momentum, point, spring) {
+var State = function(inertia, position, momentum, point, springs) {
     this.inertia = inertia ? inertia : 1;
     this.position = position ? position : new CVec(0,0);
     this.momentum = momentum ? momentum : new CVec(0,0);
     this.point = point;
-    this.spring = spring;
+    if (!(springs instanceof Array)) {
+        springs = [springs];
+    }
+    this.springs = springs;
 };
 
 /**
@@ -54,15 +57,19 @@ State.prototype.add = function(derivative) {
         this.position.add(derivative.dx),
         this.momentum.add(derivative.dp),
         this.point,
-        this.spring
+        this.springs
     )
 }
 
 var acceleration = function(state) {
     //TODO
-    var point = state.spring.point;
-    var stiffness=state.spring.stiffness, damping=state.spring.damping;
-    return point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping));
+    var force = new CVec();
+    for (var i = 0; i < state.springs.length; ++i) {
+        var point = state.springs[i].point;
+        var stiffness=state.springs[i].stiffness, damping=state.springs[i].damping;
+        force.iadd(point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping)));
+    }
+    return force;
 }
 
 var evaluate = function(initial, dt, derivative) {
@@ -130,7 +137,8 @@ var GamePhysics = function(resizer) {
 
     for (var i = 0; i < 4; ++i) {
         var point = this.testGrid.positions[i];
-        var state = new State(i, new CVec(0,0), new CVec(0,0), point, new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.6+0.05*i));
+        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.6+0.05*i)];
+        var state = new State(i, new CVec(), new CVec(), point, springs);
         this.states.push(state);
     }
 };
