@@ -56,8 +56,9 @@ Derivative.prototype.imul = function(scalar) {
 }
 
 State.prototype.iadd = function(derivative) {
-    this.position.iadd(derivative.dx),
-    this.momentum.iadd(derivative.dp)
+    this.position.iadd(derivative.dx);
+    this.momentum.iadd(derivative.dp);
+    return this;
 }
 
 var acceleration = function(state) {
@@ -104,42 +105,8 @@ var GamePhysics = function(resizer) {
     Sprite.gl = this.gl;
     this.time = 0;
     this.testSoftBodyRenderer = new SoftBodyRenderer(this.gl, 'test.png');
-
-    this.testGrid = {
-        width: 1,
-        height: 1,
-        positions: [
-            {
-                x: -0.5,
-                y: 0.5,
-                radius: 0.1
-            },
-            {
-                x: -0.5,
-                y: -0.5,
-                radius: 0.1
-            },
-            {
-                x: 0.5,
-                y: 0.5,
-                radius: 0.1
-            },
-            {
-                x: 0.5,
-                y: -0.5,
-                radius: 0.1
-            }
-        ]
-    };
-
     this.states = [];
-
-    for (var i = 0; i < 4; ++i) {
-        var point = this.testGrid.positions[i];
-        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.8+0.05*i)];
-        var state = new State(i, point, springs);
-        this.states.push(state);
-    }
+    this.testGrid = this.generateMesh();
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -166,3 +133,54 @@ GamePhysics.prototype.update = function(deltaTime) {
         state.point.y = state.position.y/100;
     }
 };
+
+GamePhysics.prototype.generateMesh = function(obj) {
+    var defaults = {
+        width: 1,
+        height: 1
+    };
+
+    if (obj === undefined) {
+        obj = {};
+    }
+    for(var key in defaults) {
+        if(!obj.hasOwnProperty(key)) {
+            obj[key] = defaults[key];
+        }
+    }
+
+    var grid = {
+        width: obj.width,
+        height: obj.height,
+        positions: [
+            {
+                x: -0.5,
+                y: 0.5,
+                radius: 0.1
+            },
+            {
+                x: -0.5,
+                y: -0.5,
+                radius: 0.1
+            },
+            {
+                x: 0.5,
+                y: 0.5,
+                radius: 0.1
+            },
+            {
+                x: 0.5,
+                y: -0.5,
+                radius: 0.1
+            }
+        ]
+    };
+
+    for (var i = 0; i < grid.positions; ++i) {
+        var point = grid.positions[i];
+        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.8+0.05*i)];
+        var state = new State(i, point, springs);
+        this.states.push(state);
+    }
+    return grid;
+}
