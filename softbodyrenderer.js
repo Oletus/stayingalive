@@ -1,4 +1,13 @@
+'use strict';
 
+var SoftBodyRenderer = function(gl, src) {
+    this.testSprite = new Sprite('test.png', Sprite.loadAsGLTexture(gl));
+};
 
-var SoftBodyRenderer = function() {
+/**
+ * @param {Array} physicsGridPositions
+ * 
+ */
+SoftBodyRenderer.prototype.render = function(physicsGridPositions) {
+    
 };
