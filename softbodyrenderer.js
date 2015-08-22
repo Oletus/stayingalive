@@ -5,9 +5,20 @@ var SoftBodyRenderer = function(gl, src) {
 };
 
 /**
- * @param {Array} physicsGridPositions
- * 
+ * @param {Object} grid Positions calculated by physics in the following format:
+ * {
+ *   width: {number}
+ *   height: {number}
+ *   positions: [
+ *     {
+ *        x: {number}
+ *        y: {number}
+ *        radius: {number}
+ *     }
+ *   ]
+ * }
+ * With positions of points forming a rectangular grid in a column-major order.
  */
-SoftBodyRenderer.prototype.render = function(physicsGridPositions) {
+SoftBodyRenderer.prototype.render = function(grid) {
     
 };
