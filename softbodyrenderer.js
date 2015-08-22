@@ -4,6 +4,7 @@ var SoftBodyRenderer = function(gl, src) {
     this.testSprite = new Sprite(src, Sprite.loadAsGLTexture(gl));
     this.gl = gl;
     this.vertexBuffer = gl.createBuffer();
+    this.texCoordBuffer = gl.createBuffer();
     
 };
 
@@ -36,12 +37,12 @@ SoftBodyRenderer.prototype.render = function(grid) {
     for (var x = 0; x < grid.width; ++x) {
         for (var y = 0; y < grid.height; ++y) {
             // Should do with an index buffer...
-            SoftBodyRenderer.pushGridCoords(arr, grid, x, y);
-            SoftBodyRenderer.pushGridCoords(arr, grid, x + 1, y);
-            SoftBodyRenderer.pushGridCoords(arr, grid, x, y + 1);
-            SoftBodyRenderer.pushGridCoords(arr, grid, x, y + 1);
-            SoftBodyRenderer.pushGridCoords(arr, grid, x + 1, y);
-            SoftBodyRenderer.pushGridCoords(arr, grid, x + 1, y + 1);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x, y);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x + 1, y);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x, y + 1);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x, y + 1);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x + 1, y);
+            SoftBodyRenderer.pushGridCoords(arr, texArr, grid, x + 1, y + 1);
             triangleCount += 2;
         }
     }
@@ -49,13 +50,24 @@ SoftBodyRenderer.prototype.render = function(grid) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
     var positionAttribLocation = 0;
     gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
+    var texCoordAttribLocation = 1;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texArr), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(texCoordAttribLocation, 2, gl.FLOAT, false, 0, 0);
     gl.drawArrays(gl.TRIANGLES, 0, triangleCount * 3);
 };
 
-SoftBodyRenderer.pushGridCoords = function(target, grid, x, y) {
-    var positionsIndex = y + x * (grid.height + 1);
-    target.push(grid.positions[positionsIndex].x);
-    target.push(grid.positions[positionsIndex].y);
+SoftBodyRenderer.getGridPosition = function(grid, xInd, yInd) {
+    var positionsIndex = yInd + xInd * (grid.height + 1);
+    return grid.positions[positionsIndex];
+};
+
+SoftBodyRenderer.pushGridCoords = function(target, targetTexCoords, grid, xInd, yInd) {
+    var pos = SoftBodyRenderer.getGridPosition(grid, xInd, yInd);
+    target.push(pos.x);
+    target.push(pos.y);
+    targetTexCoords.push(xInd / grid.width);
+    targetTexCoords.push(yInd / grid.height);
 };
 
 SoftBodyRenderer.vertexSrc = [

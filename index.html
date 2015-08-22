@@ -35,6 +35,8 @@ var Game = function(resizer) {
     gl.disable(gl.CULL_FACE);
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enableVertexAttribArray(1);
     SoftBodyRenderer.loadShaders(gl);
     Sprite.gl = gl;
     /*this.canvasUI = new CanvasUI({
