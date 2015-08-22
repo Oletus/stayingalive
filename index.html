@@ -24,12 +24,14 @@
 <script src="utiljs.js"></script>
 <script src="utilgl.js"></script>
 <script src="tilemap.js"></script>
+<script src="softbodyrenderer.js"></script>
 <script>
 'use strict';
 
 var Game = function(resizer) {
     this.canvas = resizer.getCanvas();
     this.gl = this.canvas.getContext('webgl');
+    SoftBodyRenderer.loadShaders(this.gl);
     Sprite.gl = this.gl;
     /*this.canvasUI = new CanvasUI({
         element: this.canvas,

@@ -22,3 +22,27 @@ var SoftBodyRenderer = function(gl, src) {
 SoftBodyRenderer.prototype.render = function(grid) {
     
 };
+
+SoftBodyRenderer.vertexSrc = [
+'attribute vec2 aVertexPosition;',
+'attribute vec2 a_texCoord;',
+'varying vec2 v_texCoord;',
+'void main() {',
+'    gl_Position = vec4(aVertexPosition, 0.0, 1.0);',
+'    v_texCoord = a_texCoord;',
+'}'
+].join('\n');
+
+SoftBodyRenderer.fragmentSrc = [
+'precision highp float;',
+'uniform sampler2D u_tex;',
+'varying vec2 v_texCoord;',
+'void main() {',
+'    gl_FragColor = texture2D(u_tex, v_texCoord);',
+'}'
+].join('\n');
+
+SoftBodyRenderer.loadShaders = function(gl) {
+    var uniforms = {'u_tex': 'tex2d'};
+    SoftBodyRenderer.shader = new ShaderProgram(gl, SoftBodyRenderer.fragmentSrc, SoftBodyRenderer.vertexSrc, uniforms);
+};
