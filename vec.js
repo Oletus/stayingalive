@@ -4,8 +4,8 @@
  */
 var CVec = function(x, y) {
     this.type = 'CVector';
-    this.x = x;
-    this.y = y;
+    this.x = x ? x : 0;
+    this.y = y ? y : 0;
 }
 
 CVec.prototype.isub = function(other) {
