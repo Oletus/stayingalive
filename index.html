@@ -30,8 +30,9 @@
 <script>
 'use strict';
 
-var Game = function(resizer) {
+var Game = function(resizer, physics) {
     this.resizer = resizer;
+    this.physics = physics;
     this.canvas = resizer.getCanvas();
     this.gl = glUtils.initGl(this.canvas, {}, 4);
     var gl = this.gl;
@@ -52,6 +53,7 @@ var Game = function(resizer) {
     });
     this.time = 0;
     this.testSoftBodyRenderer = new SoftBodyRenderer(gl, 'test.png');
+    this.testGrid = physics.generateMesh();
 };
 
 Game.prototype.render = function(ctx) {
@@ -65,32 +67,7 @@ Game.prototype.render = function(ctx) {
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     
-    var testGrid = {
-        width: 1,
-        height: 1,
-        positions: [
-            {
-                x: -0.5,
-                y: 0.5,
-                radius: 0.3
-            },
-            {
-                x: -0.5 + Math.sin(this.time) * 0.1,
-                y: -0.5,
-                radius: 0.3
-            },
-            {
-                x: 0.5,
-                y: 0.5,
-                radius: 0.3
-            },
-            {
-                x: 0.5,
-                y: -0.5,
-                radius: 0.3
-            }
-        ]
-    };
+    var testGrid = this.testGrid;
     this.testSoftBodyRenderer.render(testGrid, this.getWorldTransform(ctx.canvas));
     
     return ctx;
@@ -133,8 +110,8 @@ var start = function() {
     Audio.muteAll(DEV_MODE && false); // Set to true if sounds annoy developers
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
-    var game = new Game(resizer);
     var physics = new GamePhysics(resizer);
+    var game = new Game(resizer, physics);
     startMainLoop([resizer, game, physics], {debugMode: DEBUG_MAIN_LOOP});
 };
 </script>
