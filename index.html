@@ -28,7 +28,7 @@
 
 var Game = function(resizer) {
     this.canvas = resizer.getCanvas();
-    this.realCtx = this.canvas.getContext('2d');
+    this.gl = this.canvas.getContext('webgl');
     this.canvasUI = new CanvasUI({
         element: this.canvas,
         getCanvasPositionFromEvent: function(event) {
@@ -43,10 +43,11 @@ Game.prototype.render = function(ctx) {
     // where ctx.canvas.width/height are set to the coordinate system width/height.
     // Otherwise the context initialized here is used.
     if (ctx === undefined) {
-        ctx = this.realCtx;
+        ctx = this.gl;
     }
-    ctx.fillStyle = cssUtil.rgbString([0, 0, (Math.sin(this.time) * 0.5 + 0.5) * 255]);
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    var gl = ctx;
+    gl.clearColor(0.2, 0.2, 0.2, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     return ctx;
 };
 
@@ -60,9 +61,9 @@ var start = function() {
     var DEBUG_MAIN_LOOP = DEV_MODE && true; // Set to true to allow fast-forwarding main loop with 'f'
     Audio.muteAll(DEV_MODE && false); // Set to true if sounds annoy developers
 
-    var resizer = new CanvasResizer({mode: CanvasResizer.Mode.DYNAMIC});
+    var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
     var game = new Game(resizer);
-    startMainLoop([resizer, game, new LoadingBar()], {debugMode: DEBUG_MAIN_LOOP});
+    startMainLoop([resizer, game], {debugMode: DEBUG_MAIN_LOOP});
 };
 </script>
 </head>

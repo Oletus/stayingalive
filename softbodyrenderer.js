@@ -1,0 +1,4 @@
+
+
+var SoftBodyRenderer = function() {
+};
