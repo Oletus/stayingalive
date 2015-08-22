@@ -70,22 +70,22 @@ Game.prototype.render = function(ctx) {
             {
                 x: -0.5,
                 y: 0.5,
-                radius: 0.1
+                radius: 0.3
             },
             {
                 x: -0.5 + Math.sin(this.time) * 0.1,
                 y: -0.5,
-                radius: 0.1
+                radius: 0.3
             },
             {
                 x: 0.5,
                 y: 0.5,
-                radius: 0.1
+                radius: 0.3
             },
             {
                 x: 0.5,
                 y: -0.5,
-                radius: 0.1
+                radius: 0.3
             }
         ]
     };
@@ -114,6 +114,7 @@ Game.prototype.getWorldPosition = function(event) {
     var glNormPos = new Vec2(canvasPos.x / this.resizer.canvas.width * 2.0 - 1.0, -canvasPos.y / this.resizer.canvas.height * 2.0 + 1.0);
     var worldTransform = this.getWorldTransform(this.resizer.canvas);
     var glToWorldTransform = glUtils.matrixInverse(worldTransform);
+    // This assumes that the world transform only has scale and translation.
     glNormPos.x = glNormPos.x * glToWorldTransform[0] + glToWorldTransform[12];
     glNormPos.y = glNormPos.y * glToWorldTransform[5] + glToWorldTransform[13];
     return glNormPos;
