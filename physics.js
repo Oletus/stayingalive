@@ -1,13 +1,17 @@
 'use strict';
 
-/**
- * An updater to handle the physics loop and state changes
- */
+var Spring = function(point, stiffness, damping) {
+    this.point = point ? point : new CVec(0,0);
+    this.stiffness = stiffness ? stiffness : 10;
+    this.damping = damping ? damping : 0.25;
+}
 
-var State = function(inertia, position, momentum) {
-	this.inertia = inertia ? inertia : 1;
+var State = function(inertia, position, momentum, point, spring) {
+    this.inertia = inertia ? inertia : 1;
     this.position = position ? position : new CVec(0,0);
     this.momentum = momentum ? momentum : new CVec(0,0);
+    this.point = point;
+    this.spring = spring;
 };
 
 /**
@@ -48,14 +52,16 @@ State.prototype.add = function(derivative) {
     return new State(
     	this.inertia,
         this.position.add(derivative.dx),
-        this.momentum.add(derivative.dp)
+        this.momentum.add(derivative.dp),
+        this.point,
+        this.spring
     )
 }
 
 var acceleration = function(state) {
     //TODO
-    var point = new CVec(-50,50);
-    var stiffness=40, damping=0.5;
+    var point = state.spring.point;
+    var stiffness=state.spring.stiffness, damping=state.spring.damping;
     return point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping));
 }
 
@@ -83,6 +89,9 @@ var integrate = function(state, dt) {
     state.momentum.iadd(d4.dp.mul(dt));
 }
 
+/**
+ * An updater to handle the physics loop and state changes
+ */
 var GamePhysics = function(resizer) {
     this.canvas = resizer.getCanvas();
     this.gl = this.canvas.getContext('webgl');
@@ -100,7 +109,7 @@ var GamePhysics = function(resizer) {
                 radius: 0.1
             },
             {
-                x: -0.5 + Math.sin(this.time) * 0.1,
+                x: -0.5,
                 y: -0.5,
                 radius: 0.1
             },
@@ -117,7 +126,13 @@ var GamePhysics = function(resizer) {
         ]
     };
 
-    this.state = new State(1);
+    this.states = [];
+
+    for (var i = 0; i < 4; ++i) {
+        var point = this.testGrid.positions[i];
+        var state = new State(i, new CVec(0,0), new CVec(0,0), point, new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.6+0.05*i));
+        this.states.push(state);
+    }
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -136,7 +151,11 @@ GamePhysics.prototype.render = function(ctx) {
 
 GamePhysics.prototype.update = function(deltaTime) {
     //XXX: An accumulator would probably be a good idea here
-    this.testGrid.positions[0].x = this.state.position.x/100;
-    this.testGrid.positions[0].y = this.state.position.y/100;
-    integrate( this.state, deltaTime );
+
+    for (var i = 0; i < this.states.length; ++i) {
+        var state = this.states[i];
+        integrate( state, deltaTime );
+        state.point.x = state.position.x/100;
+        state.point.y = state.position.y/100;
+    }
 };
