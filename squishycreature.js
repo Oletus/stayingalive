@@ -35,8 +35,8 @@ var OrganParameters = [
 },
 {
     name: 'lungs',
-    image_src: 'test.png',
-    gridSize: {width: 4, height: 3},
+    image_src: 'o_lung_single.png',
+    gridSize: {width: 3, height: 4},
     veinFunc: function(deltaTime) {
         if (this.veins.length > 0) {
             var maxBloodPerTick = 0.025 * deltaTime;
@@ -146,7 +146,7 @@ var SquishyCreature = function(options) {
             vein.renderer = SquishyCreature.veinRenderer;
             // TODO: Attach vein to organs with springs/constraints
             this.physics.attachPoints(vein.positions[0], organ.positions[j]);
-            //this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
+            this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
             this.organs.push(vein);
 
             organ.veins.push(vein);
