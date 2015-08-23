@@ -1,5 +1,21 @@
 'use strict';
 
+/*[
+'xx  ',
+'xxx ',
+'xxxx',
+'xxxx',
+' xxx',
+]*/
+
+var substanceIs = function(match) {
+    if (match instanceof Array) {
+        return function(key) { return match.indexOf(key) != -1; };
+    } else {
+        return function(key) { return key == match; };
+    }
+};
+
 var OrganParameters = [
 {
     name: 'heart',
@@ -56,12 +72,27 @@ var OrganParameters = [
                     this.veins[i].contents.give(this.contents.take(-extraInVein));
                 }
             }
-            // TODO: Also oxygenate the blood.
-            //this.innerContents.current['air'] += ;
-            //this.contents.current['oxygen'] += this.innerContents['air'] * 0.001225 * 0.23 * 0.1;
+            // Max capacity of lungs is around 6 liters air.
+            // A person breathes in/out around 0.5 liters per breath.
+            var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01;
+            if (airIntake > 0) {
+                this.innerContents.current['air'] += airIntake;
+            } else {
+                this.innerContents.take(-airIntake, substanceIs(['co2', 'air']));
+            }
+            // Oxygenate the blood and remove CO2.
+            // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight. 0.1 is the efficiency factor.
+            var oxygenation = this.innerContents.current['air'] * 0.001225 * 0.23 * 0.1 * deltaTime;
+            this.contents.give({'oxygen': oxygenation});
+            this.innerContents.give(this.contents.take(oxygenation, substanceIs('co2')));
         }
     },
-    contents: {},
+    contents: {
+        blood: 0.1
+    },
+    innerContents: {
+        'air': 3
+    },
     defaultVeins: []
 },
 {
@@ -80,7 +111,12 @@ var OrganParameters = [
             // Also add nutrients to the blood.
         }
     },
-    contents: {},
+    contents: {
+        blood: 0.5
+    },
+    innerContents: {
+        'nutrients': 6
+    },
     defaultVeins: []
 }
 ];
@@ -88,7 +124,7 @@ var OrganParameters = [
 var OrganContents = function(options) {
     var defaults = {
         'blood': 0.1, // liters
-        'air': 0.0, // liters. Air is about 0.001225 kg / liter. 23% of air is oxygen by weight.
+        'air': 0.0, // liters
         'oxygen': 0.0, // kg
         'co2': 0.0, // kg
         'nutrients': 0.0 // kg
@@ -105,6 +141,9 @@ OrganContents.prototype.take = function(amount, filterFunc) {
     var total = this.total(filterFunc);
     if (total < amount) {
         amount = total;
+    }
+    if (total == 0) {
+        return {};
     }
     var amountProportion = amount / total;
     var amountsTaken = {};
@@ -168,6 +207,7 @@ var SquishyCreature = function(options) {
         organ.name = OrganParameters[i].name;
         organ.updateMetabolism = OrganParameters[i].updateMetabolism;
         organ.contents = new OrganContents(OrganParameters[i].contents);
+        organ.innerContents = new OrganContents(OrganParameters[i].innerContents);
         this.organs.push(organ);
     }
     // Add default veins
@@ -181,7 +221,7 @@ var SquishyCreature = function(options) {
             var vein = this.physics.generateMesh({
                 x: organ.positions[j].x,
                 y: organ.positions[j].y,
-                width: 10,
+                width: 15,
                 height: 0,
                 collisionGroup: 1,
                 initScale: 25
@@ -250,7 +290,12 @@ SquishyCreature.prototype.update = function(deltaTime) {
     var pulseModifier = 1.0 + Math.sin(this.time * 3) * 0.1;
     for (var i = 0; i < this.organs.length; ++i) {
         this.organs[i].time += deltaTime;
-        this.organs[i].parameters.pulseModifier = 0.5 + (this.organs[i].contents.total() / this.organs[i].contents.initialTotal) * 0.6;
+        var fillMult = (this.organs[i].contents.total() / this.organs[i].contents.initialTotal);
+        if (this.organs[i].innerContents.initialTotal > 0) {
+            fillMult = (this.organs[i].innerContents.total() + this.organs[i].contents.total()) / 
+                       (this.organs[i].innerContents.initialTotal + this.organs[i].contents.initialTotal);
+        }
+        this.organs[i].parameters.pulseModifier = 0.5 + fillMult * 0.6;
         this.organs[i].updateMetabolism(deltaTime);
     }
 };
