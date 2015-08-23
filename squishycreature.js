@@ -279,9 +279,13 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
     var scaleX = worldTransform[0] * ctx.canvas.width * 0.5;
     var scaleY = worldTransform[5] * ctx.canvas.height * 0.5;
     ctx.scale(scaleX, -scaleY);
+
+    physics.renderDebug(ctx);
+
     for (var i = 0; i < this.organs.length; ++i) {
-        physics.renderDebug(ctx, this.organs[i]);
+        physics.renderDebugGrid(ctx, this.organs[i]);
     }
+
     ctx.restore();
 };
 

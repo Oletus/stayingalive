@@ -302,7 +302,10 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
 };
 
-GamePhysics.prototype.renderDebug = function(ctx, grid) {
+GamePhysics.prototype.renderDebug = function(ctx) {
+};
+
+GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
     var positions = grid.positions;
     for (var j = 0; j < positions.length; ++j) {
         var pos = positions[j];
