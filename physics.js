@@ -97,6 +97,7 @@ var acceleration = function(particle, state) {
     for (var i = 0; i < particle.springs.length; ++i) {
         force.iadd(particle.springs[i].calculate(state));
     }
+    force.iadd(new CVec((Math.random()-.5)*500, (Math.random()-.5)*500));
     return force;
 }
 
