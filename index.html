@@ -55,6 +55,16 @@ var Game = function(resizer, physics) {
     this.time = 0;
     
     this.squishyCreature = new SquishyCreature({gl: gl, physics: physics});
+    
+    this.draggedParticle = null;
+    this.canvasUI.down = function(vec) {
+        if (that.draggedParticle != null) {
+            that.draggedParticle.externalForce = new CVec(0, 0);
+        }
+        CanvasUI.prototype.down.apply(that.canvasUI, arguments);
+        var part = that.physics.getNearestParticle(vec, 60);
+        that.draggedParticle = part;
+    };
 };
 
 Game.prototype.render = function(ctx) {
@@ -101,6 +111,13 @@ Game.prototype.getWorldPosition = function(event) {
 
 Game.prototype.update = function(deltaTime) {
     this.time += deltaTime;
+    
+    if (this.draggedParticle != null) {
+        var part = this.draggedParticle;
+        var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
+        part.externalForce = cursor.sub(part.state.position);
+        console.log(part);
+    }
 };
 
 var DEV_MODE = (window.location.href.indexOf("?devMode") != -1);

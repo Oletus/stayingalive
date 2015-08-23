@@ -9,6 +9,7 @@ var Particle = function(point, springs, inertia, state) {
     this.inertia = inertia ? inertia : 1;
     this.state_last = state ? state : new State();
     this.state = this.state_last.copy();
+    this.externalForce = new CVec(0,0);
 }
 
 var State = function(position, momentum) {
@@ -96,6 +97,7 @@ var acceleration = function(particle, state) {
         force.iadd(particle.springs[i].calculate(state));
     }
     force.iadd(new CVec((Math.random()-.5)*500, (Math.random()-.5)*500));
+    force.iadd(particle.externalForce);
     return force;
 }
 
@@ -166,6 +168,18 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
 };
 
+GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) {
+    var nearestParticle = null;
+    for (var i = 0; i < this.particles.length; ++i) {
+        var distance = this.particles[i].state.position.distance(worldPos);
+        if (distance < smallestDistance) {
+            nearestParticle = this.particles[i];
+            smallestDistance = distance;
+        }
+    }
+    return nearestParticle;
+};
+
 GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
         width: 3,
@@ -219,7 +233,7 @@ GamePhysics.prototype.generateMesh = function(options) {
             };
             grid.positions.push(point);
 
-            var springs = [new Spring(new CVec(point.x*obj.initScale, point.y*obj.initScale), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
+            var springs = [];
             var state = new State(new CVec(point.x*obj.initScale/2, point.y*obj.initScale/2));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
