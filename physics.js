@@ -169,8 +169,8 @@ GamePhysics.prototype.update = function(deltaTime) {
 
 GamePhysics.prototype.generateMesh = function(obj) {
     var defaults = {
-        width: 1,
-        height: 1,
+        width: 2,
+        height: 2,
         subdivisions: 1,
     };
 
@@ -212,14 +212,14 @@ GamePhysics.prototype.generateMesh = function(obj) {
 
     var gridparticles = [];
 
-    //FIXME:Having more subdivisions doesn't seem to produce a happy mesh. Is this a render bug?
-    var subs = obj.subdivisions;
-    for (var sx = 0; sx <= subs; ++sx) {
+    var width = obj.width;
+    var height = obj.height;
+    for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
-        for (var sy = 0; sy <= subs; ++sy) {
+        for (var sy = 0; sy <= height; ++sy) {
             var point = {
-                x: -0.5 + sx/subs,
-                y: 0.5 - sy/subs,
+                x: -0.5 + sx/width,
+                y: 0.5 - sy/height,
                 radius: 0.3,
             };
             grid.positions.push(point);
@@ -233,13 +233,13 @@ GamePhysics.prototype.generateMesh = function(obj) {
         }
     }
 
-    for (var sx = 0; sx <= subs; ++sx) {
-        for (var sy = 0; sy <= subs; ++sy) {
+    for (var sx = 0; sx <= width; ++sx) {
+        for (var sy = 0; sy <= height; ++sy) {
             var particle = gridparticles[sx][sy];
             if (sx > 0) particle.springs.push(new Spring(gridparticles[sx-1][sy].state_last.position, 10, 0.9, 40));
-            if (sx < subs) particle.springs.push(new Spring(gridparticles[sx+1][sy].state_last.position, 10, 0.9, 40));
+            if (sx < width) particle.springs.push(new Spring(gridparticles[sx+1][sy].state_last.position, 10, 0.9, 40));
             if (sy > 0) particle.springs.push(new Spring(gridparticles[sx][sy-1].state_last.position, 10, 0.9, 40));
-            if (sy < subs) particle.springs.push(new Spring(gridparticles[sx][sy+1].state_last.position, 10, 0.9, 40));
+            if (sy < height) particle.springs.push(new Spring(gridparticles[sx][sy+1].state_last.position, 10, 0.9, 40));
         }
     }
 
