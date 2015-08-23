@@ -109,7 +109,7 @@ Game.prototype.render = function(ctx) {
     if (DEV_MODE) {
         this.ctx2D.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
         this.ctx2D.fillStyle = '#fff';
-        this.squishyCreature.renderDebug(this.ctx2D, this.getWorldTransform(ctx.canvas));
+        this.squishyCreature.renderDebug(this.ctx2D, this.physics, this.getWorldTransform(ctx.canvas));
     }
     
     gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);

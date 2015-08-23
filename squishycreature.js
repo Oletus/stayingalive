@@ -35,7 +35,7 @@ SquishyCreature.prototype.render = function(worldTransform) {
     }
 };
 
-SquishyCreature.prototype.renderDebug = function(ctx, worldTransform) {
+SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
     ctx.save();
     var transX = ctx.canvas.width * 0.5;
     var transY = ctx.canvas.height * 0.5;
@@ -44,14 +44,7 @@ SquishyCreature.prototype.renderDebug = function(ctx, worldTransform) {
     var scaleY = worldTransform[5] * ctx.canvas.height * 0.5;
     ctx.scale(scaleX, -scaleY);
     for (var i = 0; i < this.organs.length; ++i) {
-        var positions = this.organs[i].positions;
-        for (var j = 0; j < positions.length; ++j) {
-            var pos = positions[j];
-            ctx.fillRect(pos.x, pos.y, 5, 5);
-            /*ctx.beginPath();
-            ctx.arc(pos.x, pos.y, pos.radius, 0, Math.PI * 2);
-            ctx.strokePath();*/
-        }
+        physics.renderDebug(ctx, this.organs[i]);
     }
     ctx.restore();
 };

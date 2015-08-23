@@ -238,6 +238,17 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
 };
 
+GamePhysics.prototype.renderDebug = function(ctx, grid) {
+    var positions = grid.positions;
+    for (var j = 0; j < positions.length; ++j) {
+        var pos = positions[j];
+        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, pos.radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+};
+
 GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) {
     var nearestParticle = null;
     for (var i = 0; i < this.particles.length; ++i) {
