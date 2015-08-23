@@ -43,6 +43,7 @@ var Game = function(resizer, physics) {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enableVertexAttribArray(1);
     SoftBodyRenderer.loadShaders(gl);
+    SquishyCreature.initRenderers(gl);
     Sprite.gl = gl;
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     
