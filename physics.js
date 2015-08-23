@@ -21,6 +21,7 @@ var Particle = function(point, springs, inertia, collisionGroup, state) {
     this.state_last = state ? state : new State();
     this.state = this.state_last.copy();
 
+    this.collides = true;
     this.collisionGroup = collisionGroup ? collisionGroup : 0;
     this.contacts = [];
     this.attachment = null;
@@ -222,12 +223,15 @@ GamePhysics.prototype.update = function(deltaTime) {
 
     // Detect collisions
     for (var k = 0; k < this.particles.length; ++k) {
+        var particle1 = this.particles[k];
+        if (!particle1.collides) continue;
         // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
         // Could also consider testing only edge particles.
         for (var i = k+1; i < this.particles.length; ++i) {
-            var particle1 = this.particles[k];
             var particle2 = this.particles[i];
+            if (!particle2.collides) continue;
             if (particle1.collisionGroup != particle2.collisionGroup) continue;
+            if (particle1.point.grid === particle2.point.grid) continue;
             var minDistance = particle1.point.getRadius() + particle2.point.getRadius();
             var minDistanceSq = minDistance * minDistance;
             var distanceSq = particle1.state.position.distanceSq(particle2.state.position);
@@ -333,6 +337,7 @@ GamePhysics.prototype.generateMesh = function(options) {
         x: 0,
         y: 0,
         collisionGroup: 0,
+        collisionDef: null,
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -345,21 +350,36 @@ GamePhysics.prototype.generateMesh = function(options) {
             pulseModifier: 1
         }
     };
+    var width = obj.width;
+    var height = obj.height;
+    var collisionDef = obj.collisionDef
+
+    var collides = null;
+    if (collisionDef != null) {
+        if (collisionDef.length != height) throw "Collision Definition for mesh doesn't align to mesh";
+        collides = [];
+        for (var sy = 0; sy < collisionDef.length; ++sy) {
+            var arr = collisionDef.split('');
+            if (arr.length != width) throw "Collision Definition for mesh doesn't align to mesh";
+            collides[sy] = [];
+            for (var sx = 0; sx < arr.length; ++sx) {
+                collides[sy][sx] = (arr != ' ');
+            }
+        }
+    }
 
     var gridparticles = [];
     var collisionGroup = obj.collisionGroup;
 
-    var width = obj.width;
-    var height = obj.height;
     for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
             var point = new Point(grid, sx * obj.initScale + obj.x, sy * obj.initScale + obj.y, 0.45 * obj.initScale)
             grid.positions.push(point);
-
             var springs = [];
             var state = new State(new CVec(point.x, point.y));
             var particle = new Particle(point, springs, point.radius/20, collisionGroup, state);
+            if (collides != null) particle.collides = collides[sy][sx];
             gridparticles[sx][sy] = particle;
             point.particle = particle;
             this.particles.push(particle);
