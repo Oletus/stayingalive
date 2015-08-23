@@ -125,8 +125,8 @@ var SquishyCreature = function(options) {
             var y = organ.positions[0].y;
             var organ2 = this.findOrganByName(vein.target);
             var vein = this.physics.generateMesh({
-                x: x,
-                y: y,
+                x: organ.positions[j].x,
+                y: organ.positions[j].y,
                 width: 10,
                 height: 0,
                 collisionGroup: 1,
@@ -135,8 +135,8 @@ var SquishyCreature = function(options) {
             SquishyCreature.initOrgan(vein);
             vein.renderer = SquishyCreature.veinRenderer;
             // TODO: Attach vein to organs with springs/constraints
-            // this.physics.attachPoints(vein.positions[0], organ.positions[j]);
-            // this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
+            this.physics.attachPoints(vein.positions[0], organ.positions[j]);
+            //this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
             this.organs.push(vein);
 
             organ.veins.push(vein);
