@@ -217,16 +217,18 @@ GamePhysics.prototype.generateMesh = function(obj) {
     for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
+            var x = -0.5 + sx/width;
+            var y = 0.5 - sy/height;
             var point = {
-                x: -0.5 + sx/width,
-                y: 0.5 - sy/height,
-                radius: 0.3,
+                x: x,
+                y: y,
+                radius: Math.min(0.5, Math.max(0, Math.random() * (1.0 - Math.abs(x) - Math.abs(y))/3) + 0.3),
             };
             grid.positions.push(point);
 
             //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10, 0.8)
             var springs = []; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
-            var state = new State(new CVec(point.x, point.y));
+            var state = new State(new CVec(point.x*10, point.y*10));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
@@ -236,12 +238,16 @@ GamePhysics.prototype.generateMesh = function(obj) {
     for (var sx = 0; sx <= width; ++sx) {
         for (var sy = 0; sy <= height; ++sy) {
             var particle = gridparticles[sx][sy];
-            if (sx > 0) particle.springs.push(new Spring(gridparticles[sx-1][sy].state_last.position, 10, 0.9, 40));
-            if (sx < width) particle.springs.push(new Spring(gridparticles[sx+1][sy].state_last.position, 10, 0.9, 40));
-            if (sy > 0) particle.springs.push(new Spring(gridparticles[sx][sy-1].state_last.position, 10, 0.9, 40));
-            if (sy < height) particle.springs.push(new Spring(gridparticles[sx][sy+1].state_last.position, 10, 0.9, 40));
+            if (sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy]));
+            if (sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy]));
+            if (sy > 0) particle.springs.push(createSpring(particle, gridparticles[sx][sy-1]));
+            if (sy < height) particle.springs.push(createSpring(particle, gridparticles[sx][sy+1]));
         }
     }
 
     return grid;
+}
+
+var createSpring = function(particle, target) {
+    return new Spring(target.state_last.position, 5, 0.999, (particle.point.radius + target.point.radius) * 50);
 }
