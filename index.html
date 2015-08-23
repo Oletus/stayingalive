@@ -27,6 +27,7 @@
 <script src="tilemap.js"></script>
 <script src="softbodyrenderer.js"></script>
 <script src="physics.js"></script>
+<script src="squishycreature.js"></script>
 <script>
 'use strict';
 
@@ -52,8 +53,8 @@ var Game = function(resizer, physics) {
         }
     });
     this.time = 0;
-    this.testSoftBodyRenderer = new SoftBodyRenderer(gl, 'test.png');
-    this.testGrid = physics.generateMesh({});
+    
+    this.squishyCreature = new SquishyCreature({gl: gl, physics: physics});
 };
 
 Game.prototype.render = function(ctx) {
@@ -67,8 +68,7 @@ Game.prototype.render = function(ctx) {
     gl.clearColor(0.2, 0.2, 0.2, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     
-    var testGrid = this.testGrid;
-    this.testSoftBodyRenderer.render(testGrid, this.getWorldTransform(ctx.canvas));
+    this.squishyCreature.render(this.getWorldTransform(ctx.canvas));
     
     return ctx;
 };
