@@ -182,8 +182,8 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
 
 GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
-        width: 3,
-        height: 3,
+        width: 2,
+        height: 2,
         subdivisions: 1,
         initScale: 100
     };
@@ -233,7 +233,7 @@ GamePhysics.prototype.generateMesh = function(options) {
             };
             grid.positions.push(point);
 
-            var springs = [];
+            var springs = []; //[new Spring(new CVec(point.x*obj.initScale, point.y*obj.initScale), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
             var state = new State(new CVec(point.x*obj.initScale/2, point.y*obj.initScale/2));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
@@ -244,10 +244,16 @@ GamePhysics.prototype.generateMesh = function(options) {
     for (var sx = 0; sx <= width; ++sx) {
         for (var sy = 0; sy <= height; ++sy) {
             var particle = gridparticles[sx][sy];
+            // Horizontal / vertical springs
             if (sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy]));
             if (sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy]));
             if (sy > 0) particle.springs.push(createSpring(particle, gridparticles[sx][sy-1]));
             if (sy < height) particle.springs.push(createSpring(particle, gridparticles[sx][sy+1]));
+            // Diagonal springs
+            if (sy < height && sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy+1]));
+            if (sy > 0 && sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy-1]));
+            if (sy < height && sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy+1]));
+            if (sy > 0 && sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy-1]));
         }
     }
 
@@ -255,5 +261,5 @@ GamePhysics.prototype.generateMesh = function(options) {
 }
 
 var createSpring = function(particle, target) {
-    return new Spring(target.state_last.position, 5, 0.999, (particle.point.radius + target.point.radius) * 0.5);
+    return new Spring(target.state_last.position, 100, 0.9, particle.state.position.distance(target.state.position));
 }
