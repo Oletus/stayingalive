@@ -122,7 +122,7 @@ Game.prototype.update = function(deltaTime) {
     if (this.draggedParticle != null) {
         var part = this.draggedParticle;
         var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
-        part.externalForce = cursor.sub(part.state.position).imul(30);
+        part.externalForce = cursor.sub(part.state.position).imul(90);
         console.log(part);
     }
 };

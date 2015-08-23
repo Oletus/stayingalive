@@ -172,10 +172,6 @@ GamePhysics.prototype.update = function(deltaTime) {
         var particle = this.particles[i];
         var state = particle.state;
         integrate( particle, state, deltaTime );
-
-        // Update points
-        particle.point.x = state.position.x;
-        particle.point.y = state.position.y;
     }
     
     // Hard constraints
@@ -205,7 +201,34 @@ GamePhysics.prototype.update = function(deltaTime) {
             }
         }
         // Hard constraints for all other particles in the scene
-        // TODO: Implement and optimize this with a grid-based acceleration structure
+        for (var k = 0; k < this.particles.length; ++k) {
+            // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
+            // Could also consider testing only edge particles.
+            for (var i = 0; i < this.particles.length; ++i) {
+                if (i != k) {
+                    var particle = this.particles[k];
+                    var particle2 = this.particles[i];
+                    var minDistance = particle.point.radius + particle2.point.radius;
+                    var distance = particle.state.position.distance(particle2.state.position);
+                    if (distance < minDistance) {
+                        var diff = particle.state.position.sub(particle2.state.position);
+                        diff.normalize();
+                        diff.imul(0.5 * (minDistance - distance));
+                        particle.state.position.iadd(diff);
+                        particle.state.momentum.iadd(diff);
+                        particle2.state.position.isub(diff);
+                        particle2.state.momentum.isub(diff);
+                    }
+                }
+            }
+        }
+    }
+    
+    for (var i = 0; i < this.particles.length; ++i) {
+        // Update points
+        var particle = this.particles[i];
+        particle.point.x = particle.state.position.x;
+        particle.point.y = particle.state.position.y;
     }
 };
 
