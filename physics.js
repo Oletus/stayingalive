@@ -359,7 +359,7 @@ GamePhysics.prototype.generateMesh = function(options) {
 
             var springs = [];
             var state = new State(new CVec(point.x, point.y));
-            var particle = new Particle(point, springs, 1, collisionGroup, state);
+            var particle = new Particle(point, springs, point.radius/20, collisionGroup, state);
             gridparticles[sx][sy] = particle;
             point.particle = particle;
             this.particles.push(particle);
