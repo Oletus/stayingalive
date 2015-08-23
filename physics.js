@@ -8,33 +8,69 @@ var Particle = function(point, springs, inertia, state) {
     this.springs = springs;
     this.inertia = inertia ? inertia : 1;
     this.state_last = state ? state : new State();
-    this.state_temp = state ? state : new State();
     this.state = this.state_last.copy();
     this.externalForce = new CVec(0,0);
 }
 
-var State = function(position) {
+var State = function(position, momentum) {
     this.position = position ? position : new CVec(0,0);
+    this.momentum = momentum ? momentum : new CVec(0,0);
 };
 
 State.prototype.set = function(other) {
     this.position.set(other.position);
+    this.momentum.set(other.momentum);
     return this;
 }
 
 State.prototype.copy = function() {
-    return new State(this.position.copy());
+    return new State(this.position.copy(), this.momentum.copy());
 }
 
 State.prototype.iadd = function(derivative) {
     this.position.iadd(derivative.dx);
+    this.momentum.iadd(derivative.dp);
     return this;
 }
 
+/**
+ * Holds the intermediate state for the integration
+ */
+var Derivative = function(dx, dp) {
+    this.dx = dx ? dx : new CVec(0,0); //velocity
+    this.dp = dp ? dp : new CVec(0,0); //force
+}
 
-var Spring = function(point, stiffness, distance, particle1, particle2) {
+Derivative.prototype.iadd = function(other) {
+    this.dx.iadd(other.dx);
+    this.dp.iadd(other.dp);
+    return this;
+}
+
+Derivative.prototype.add = function(other) {
+    return new Derivative(
+        this.dx.add(other.dx),
+        this.dp.add(other.dp)
+    )
+}
+
+Derivative.prototype.mul = function(scalar) {
+    return new Derivative(
+        this.dx.mul(scalar),
+        this.dp.mul(scalar)
+    )
+}
+
+Derivative.prototype.imul = function(scalar) {
+    this.dx.imul(scalar);
+    this.dp.imul(scalar);
+    return this;
+}
+
+var Spring = function(point, stiffness, damping, distance, particle1, particle2) {
     this.point = point ? point : new CVec(0,0);
     this.stiffness = stiffness ? stiffness : 10;
+    this.damping = damping ? damping : 0.25;
     this.distance = distance ? distance : 0;
     this.particle1 = particle1;
     this.particle2 = particle2;
@@ -47,21 +83,17 @@ Spring.prototype.calculate = function(state) {
     //x = pt-s.x
     var transform = point.sub(state.position);
     //k * x - s.p*d
-    if (distance == 0) return point.sub(state.position).mul(stiffness);
+    if (distance == 0) return point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping));
     //|x|
     var length = transform.length();
     // t = (|x|-d)(x/|x|)
     transform.idiv(length).imul(length-distance);
     //k * t - s.p*d
-    return transform.mul(stiffness);
+    return transform.mul(stiffness).sub(state.momentum.mul(damping));
 }
 
 Spring.prototype.minDistance = function() {
-    return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.distance);
-};
-
-Spring.prototype.maxDistance = function() {
-    return this.distance * 1.5;
+    return this.particle1.point.radius + this.particle2.point.radius;
 };
 
 var acceleration = function(particle, state) {
@@ -70,9 +102,33 @@ var acceleration = function(particle, state) {
     for (var i = 0; i < particle.springs.length; ++i) {
         force.iadd(particle.springs[i].calculate(state));
     }
-    //force.iadd(new CVec((Math.random()-.5)*3500, (Math.random()-.5)*3500));
+    force.iadd(new CVec((Math.random()-.5)*500, (Math.random()-.5)*500));
     force.iadd(particle.externalForce);
     return force;
+}
+
+var evaluate = function(particle, initial, dt, derivative) {
+    var state = initial.copy().iadd(derivative.mul(dt));
+
+    var derivative = new Derivative(
+        state.momentum.div(particle.inertia),
+        acceleration(particle, state)
+    );
+    return derivative;
+}
+
+var d0 = new Derivative();
+var integrate = function(particle, state, dt) {
+    var d1 = evaluate(particle, state, dt*0.0, d0);
+    var d2 = evaluate(particle, state, dt*0.5, d1);
+    var d3 = evaluate(particle, state, dt*0.5, d2);
+    var d4 = evaluate(particle, state, dt*1.0, d3);
+
+    d2.iadd(d3).imul(2);
+    d4.iadd(d1).iadd(d2).imul(1/6);
+
+    state.position.iadd(d4.dx.mul(dt));
+    state.momentum.iadd(d4.dp.mul(dt));
 }
 
 /**
@@ -99,55 +155,22 @@ GamePhysics.prototype.render = function(ctx) {
 };
 
 GamePhysics.prototype.update = function(deltaTime) {
+    //XXX: An accumulator would probably be a good idea here
+
+    // Update previous state
+    for (var i = 0; i < this.particles.length; ++i) {
+        var particle = this.particles[i];
+        particle.state_last.set(particle.state);
+    }
     // Perform integration on all elements
     for (var i = 0; i < this.particles.length; ++i) {
         var particle = this.particles[i];
         var state = particle.state;
+        integrate( particle, state, deltaTime );
 
-        // Verlet integration
-        var acc = acceleration(particle, state);
-        particle.state_temp.set(state);
-        state.position.x = 2 * state.position.x - particle.state_last.position.x + acc.x * deltaTime * deltaTime;
-        state.position.y = 2 * state.position.y - particle.state_last.position.y + acc.y * deltaTime * deltaTime;
-    }
-
-    // Hard constraints
-    for (var j = 0; j < 5; ++j) { // Relaxation
-        for (var i = 0; i < this.particles.length; ++i) {
-            var particle = this.particles[i];
-            // Hard constraints for springs
-            for (var k = 0; k < particle.springs.length; ++k) {
-                var minDistance = particle.springs[k].minDistance();
-                var maxDistance = particle.springs[k].maxDistance();
-                var particle2 = particle.springs[k].particle2;
-                var distance = particle.state.position.distance(particle2.state.position);
-                if (distance < minDistance) {
-                    var diff = particle.state.position.sub(particle2.state.position);
-                    diff.normalize();
-                    diff.imul(0.5 * (minDistance - distance));
-                    particle.state.position.iadd(diff);
-                    particle2.state.position.isub(diff);
-                }
-                else if (distance > maxDistance) {
-                    var diff = particle.state.position.sub(particle2.state.position);
-                    diff.normalize();
-                    diff.imul(-0.5 * (distance - maxDistance));
-                    particle.state.position.iadd(diff);
-                    particle2.state.position.isub(diff);
-                }
-            }
-            // Hard constraints for all other particles in the scene
-            // TODO: Implement and optimize this with a grid-based acceleration structure
-        }
-    }
-
-    for (var i = 0; i < this.particles.length; ++i) {
-        var particle = this.particles[i];
         // Update points
-        particle.point.x = particle.state.position.x;
-        particle.point.y = particle.state.position.y;
-
-        particle.state_last.set(particle.state_temp);
+        particle.point.x = state.position.x;
+        particle.point.y = state.position.y;
     }
 };
 
@@ -167,7 +190,7 @@ GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
         width: 2,
         height: 2,
-        initScale: 50
+        initScale: 100
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -206,15 +229,17 @@ GamePhysics.prototype.generateMesh = function(options) {
     for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
+            var x = -0.5 + sx/width;
+            var y = 0.5 - sy/height;
             var point = {
-                x: sx * obj.initScale,
-                y: sy * obj.initScale,
-                radius: 0.5 * obj.initScale,
+                x: x,
+                y: y,
+                radius: Math.min(0.4, Math.max(0, Math.random() * (1.0 - Math.abs(x) - Math.abs(y))/3) + 0.3) * obj.initScale,
             };
             grid.positions.push(point);
 
-            var springs = [];
-            var state = new State(new CVec(point.x, point.y));
+            var springs = []; //[new Spring(new CVec(point.x*obj.initScale, point.y*obj.initScale), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
+            var state = new State(new CVec(point.x*obj.initScale/2, point.y*obj.initScale/2));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
@@ -241,6 +266,6 @@ GamePhysics.prototype.generateMesh = function(options) {
 }
 
 var createSpring = function(particle, target, diagonal) {
-    var stiffness = 200;
-    return new Spring(target.state_last.position, stiffness, particle.state.position.distance(target.state.position), particle, target);
+    var stiffness = 50;
+    return new Spring(target.state_last.position, stiffness, 0.9, particle.state.position.distance(target.state.position), particle, target);
 }
