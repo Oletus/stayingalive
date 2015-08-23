@@ -5,7 +5,7 @@ var OrganParameters = [
     name: 'heart',
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
-    veinFunc: function(deltaTime) {
+    updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
             // Real life: the heart passes around 0.070 liters per heartbeat
             // It typically contains 0.100 liters to 0.250 liters of blood.
@@ -23,6 +23,8 @@ var OrganParameters = [
     contents: {
         'blood': 0.15
     },
+    innerContents: {
+    },
     defaultVeins: [
         {
             target: 'lungs',
@@ -36,7 +38,7 @@ var OrganParameters = [
     name: 'lungs',
     image_src: 'o_lung_single.png',
     gridSize: {width: 3, height: 4},
-    veinFunc: function(deltaTime) {
+    updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
             var maxBloodPerTick = 0.025 * deltaTime;
             var totalVeinContents = 0;
@@ -55,6 +57,8 @@ var OrganParameters = [
                 }
             }
             // TODO: Also oxygenate the blood.
+            //this.innerContents.current['air'] += ;
+            //this.contents.current['oxygen'] += this.innerContents['air'] * 0.001225 * 0.23 * 0.1;
         }
     },
     contents: {},
@@ -64,7 +68,7 @@ var OrganParameters = [
     name: 'intestine',
     image_src: 'test.png',
     gridSize: {width: 25, height: 0},
-    veinFunc: function(deltaTime) {
+    updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
             /*var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
@@ -84,11 +88,14 @@ var OrganParameters = [
 var OrganContents = function(options) {
     var defaults = {
         'blood': 0.1, // liters
-        'air': 0.0, // kg
+        'air': 0.0, // liters. Air is about 0.001225 kg / liter. 23% of air is oxygen by weight.
+        'oxygen': 0.0, // kg
+        'co2': 0.0, // kg
         'nutrients': 0.0 // kg
     };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
+    this.initialTotal = this.total();
     this.initial = {};
     objectUtil.initWithDefaults(this.initial, defaults, options);
 };
@@ -159,7 +166,7 @@ var SquishyCreature = function(options) {
         SquishyCreature.initOrgan(organ);
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
-        organ.veinFunc = OrganParameters[i].veinFunc;
+        organ.updateMetabolism = OrganParameters[i].updateMetabolism;
         organ.contents = new OrganContents(OrganParameters[i].contents);
         this.organs.push(organ);
     }
@@ -194,9 +201,10 @@ var SquishyCreature = function(options) {
 
 SquishyCreature.initOrgan = function(organ) {
     organ.name = '';
-    organ.contents = new OrganContents({});
+    organ.contents = new OrganContents({}); // Contents that are available to blood circulation
+    organ.innerContents = new OrganContents({'blood': 0.0}); // Contents like air in lungs, food in digestion.
     organ.veins = [];
-    organ.veinFunc = function() {};
+    organ.updateMetabolism = function() {};
     organ.time = 0;
 };
 
@@ -242,7 +250,7 @@ SquishyCreature.prototype.update = function(deltaTime) {
     var pulseModifier = 1.0 + Math.sin(this.time * 3) * 0.1;
     for (var i = 0; i < this.organs.length; ++i) {
         this.organs[i].time += deltaTime;
-        this.organs[i].parameters.pulseModifier = 0.5 + (this.organs[i].contents.current['blood'] / this.organs[i].contents.initial['blood']) * 0.6;
-        this.organs[i].veinFunc(deltaTime);
+        this.organs[i].parameters.pulseModifier = 0.5 + (this.organs[i].contents.total() / this.organs[i].contents.initialTotal) * 0.6;
+        this.organs[i].updateMetabolism(deltaTime);
     }
 };
