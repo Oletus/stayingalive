@@ -59,6 +59,11 @@ CVec.prototype.div = function(scalar) {
         this.y / scalar
     )
 }
+
+CVec.prototype.inverted = function() {
+    return new CVec(-this.x, -this.y);
+}
+
 CVec.prototype.normalized = function() {
     var x = this.x, y = this.y;
     var length = this.length();
@@ -77,10 +82,26 @@ CVec.prototype.length = function() {
     return Math.sqrt(this.x*this.x + this.y*this.y);
 }
 
+CVec.prototype.lengthSq = function() {
+    return this.x*this.x + this.y*this.y;
+}
+
 CVec.prototype.distance = function(other) {
     var x = this.x - other.x;
     var y = this.y - other.y;
     return Math.sqrt(x*x + y*y);
+}
+
+CVec.prototype.distanceSq = function(other) {
+    var x = this.x - other.x;
+    var y = this.y - other.y;
+    return x*x + y*y;
+}
+
+CVec.prototype.dot = function(other) {
+    var x = this.x * other.x;
+    var y = this.y * other.y;
+    return x + y;
 }
 
 CVec.prototype.copy = function() {
