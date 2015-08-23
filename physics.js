@@ -248,7 +248,9 @@ GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
         width: 3,
         height: 3,
-        initScale: 50
+        initScale: 50,
+        x: 0,
+        y: 0
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -256,28 +258,7 @@ GamePhysics.prototype.generateMesh = function(options) {
     var grid = {
         width: obj.width,
         height: obj.height,
-        positions: [
-            // {
-            //     x: -0.5,
-            //     y: 0.5,
-            //     radius: 0.3
-            // },
-            // {
-            //     x: -0.5,
-            //     y: -0.5,
-            //     radius: 0.3
-            // },
-            // {
-            //     x: 0.5,
-            //     y: 0.5,
-            //     radius: 0.3
-            // },
-            // {
-            //     x: 0.5,
-            //     y: -0.5,
-            //     radius: 0.3
-            // }
-        ]
+        positions: []
     };
 
     var gridparticles = [];
@@ -288,8 +269,8 @@ GamePhysics.prototype.generateMesh = function(options) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
             var point = {
-                x: sx * obj.initScale,
-                y: sy * obj.initScale,
+                x: sx * obj.initScale + obj.x,
+                y: sy * obj.initScale + obj.y,
                 radius: 0.45 * obj.initScale,
             };
             grid.positions.push(point);
