@@ -265,8 +265,8 @@ GamePhysics.prototype.update = function(deltaTime) {
                 var distance = diff.length();
                 diff.idiv(distance);
                 diff.imul(-0.5 * (distance - maxDistance));
-                particle.state.position.iadd(diff);
-                particle2.state.position.isub(diff);
+                particle.state.position.iadd(diff.div(particle.inertia));
+                particle2.state.position.isub(diff.div(particle2.inertia));
             }
         }
     }
