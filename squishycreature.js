@@ -8,11 +8,14 @@ var OrganParameters = [
     veinFunc: function(deltaTime) {
         if (this.veins.length > 0) {
             // around 0.017 liters/kg per heartbeat
-            var bloodPerTick = 0.02 * this.pulseModifier * deltaTime;
-            var spareBlood = this.veins[0].contents.take('blood', bloodPerTick);
-            this.contents.blood += spareBlood;
-            for (var i = 1; i < this.veins.length; ++i) {
-                this.veins[i].contents.blood += this.contents.take('blood', bloodPerTick * 1.1);
+            var bloodIntake = 0.02 * deltaTime * Math.sin(this.time * 3.0) * 1.5;
+            if (bloodIntake > 0) {
+                var spareBlood = this.veins[0].contents.take('blood', bloodIntake);
+                this.contents['blood'] += spareBlood;
+            } else {
+                for (var i = 1; i < this.veins.length; ++i) {
+                    this.veins[i].contents['blood'] += this.contents.take('blood', -bloodIntake * 1.1);
+                }
             }
         }
     },
@@ -31,14 +34,19 @@ var OrganParameters = [
     gridSize: {width: 4, height: 3},
     veinFunc: function(deltaTime) {
         if (this.veins.length > 0) {
-            var maxBloodPerTick = 0.025 * this.pulseModifier * deltaTime;
+            var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
             for (var i = 0; i < this.veins.length; ++i) {
                 totalBlood += this.veins[i].contents['blood'];
             }
-            // TODO: Distribute blood as evenly as possible among veins
+            // Distribute blood as evenly as possible among veins
             // according to the constraint how much blood can pass through.
-            // Also oxygenate the blood.
+            var evenBlood = totalBlood / this.veins.length;
+            for (var i = 0; i < this.veins.length; ++i) {
+                var extraBloodInVein = this.veins[i].contents['blood'] - evenBlood;
+                this.veins[i].contents.take('blood', extraBloodInVein);
+            }
+            // TODO: Also oxygenate the blood.
         }
     },
     defaultVeins: []
@@ -49,7 +57,7 @@ var OrganParameters = [
     gridSize: {width: 25, height: 0},
     veinFunc: function(deltaTime) {
         if (this.veins.length > 0) {
-            var maxBloodPerTick = 0.025 * this.pulseModifier * deltaTime;
+            var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
             for (var i = 0; i < this.veins.length; ++i) {
                 totalBlood += this.veins[i].contents['blood'];
@@ -63,21 +71,26 @@ var OrganParameters = [
 }
 ];
 
-var OrganContents = function() {
+var OrganContents = function(options) {
     var defaults = {
         'blood': 0.1, // kg
         'air': 0.0, // kg
         'nutrients': 0.0 // kg
     };
+    objectUtil.initWithDefaults(this, defaults, options);
 };
 
 OrganContents.prototype.take = function(substance, amount) {
     if (this[substance] < amount) {
         amount = this[substance];
     }
-    this.substance -= amount;
+    this[substance] -= amount;
     return amount;
 };
+
+/*OrganContents.prototype.give = function(substance, amount) {
+    this[substance] += amount;
+};*/
 
 var SquishyCreature = function(options) {
     var defaults = {
@@ -97,10 +110,9 @@ var SquishyCreature = function(options) {
             height: OrganParameters[i].gridSize.height,
             collisionGroup: 0
         });
+        SquishyCreature.initOrgan(organ);
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
-        organ.contents = new OrganContents();
-        organ.veins = [];
         organ.veinFunc = OrganParameters[i].veinFunc;
         this.organs.push(organ);
     }
@@ -118,18 +130,27 @@ var SquishyCreature = function(options) {
                 width: 10,
                 height: 0,
                 collisionGroup: 1,
-                initScale: 20
+                initScale: 25
             });
+            SquishyCreature.initOrgan(vein);
             vein.renderer = SquishyCreature.veinRenderer;
-            vein.contents = new OrganContents();
-            vein.veinFunc = function() {};
-            // TODO: Attach vein to organs with springs
+            // TODO: Attach vein to organs with springs/constraints
+            // this.physics.attachPoints(vein.positions[0], organ.positions[j]);
+            // this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
             this.organs.push(vein);
-            
+
             organ.veins.push(vein);
             organ2.veins.push(vein);
         }
     }
+};
+
+SquishyCreature.initOrgan = function(organ) {
+    organ.name = '';
+    organ.contents = new OrganContents({});
+    organ.veins = [];
+    organ.veinFunc = function() {};
+    organ.time = 0;
 };
 
 SquishyCreature.initRenderers = function(gl) {
@@ -173,7 +194,8 @@ SquishyCreature.prototype.update = function(deltaTime) {
     this.time += deltaTime;
     var pulseModifier = 1.0 + Math.sin(this.time * 3) * 0.1;
     for (var i = 0; i < this.organs.length; ++i) {
-        this.organs[i].parameters.pulseModifier = pulseModifier;
+        this.organs[i].time += deltaTime;
+        this.organs[i].parameters.pulseModifier = 0.5 + (this.organs[i].contents.blood / 0.1) * 0.6;
         this.organs[i].veinFunc(deltaTime);
     }
 };
