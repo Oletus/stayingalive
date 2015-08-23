@@ -65,6 +65,13 @@ var Game = function(resizer, physics) {
         var part = that.physics.getNearestParticle(vec, 60);
         that.draggedParticle = part;
     };
+    this.canvasUI.release = function() {
+        CanvasUI.prototype.release.apply(that.canvasUI, arguments);
+        if (that.draggedParticle != null) {
+            that.draggedParticle.externalForce = new CVec(0, 0);
+            that.draggedParticle = null;
+        }
+    };
 };
 
 Game.prototype.render = function(ctx) {
