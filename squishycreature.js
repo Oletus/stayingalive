@@ -21,6 +21,11 @@ var OrganParameters = [
     name: 'heart',
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
+    collisionDef: [
+        'xxx',
+        'xxx',
+        'xx ',
+    ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
             // Real life: the heart passes around 0.070 liters per heartbeat
@@ -54,6 +59,13 @@ var OrganParameters = [
     name: 'lungs',
     image_src: 'o_lung_single.png',
     gridSize: {width: 3, height: 4},
+    collisionDef: [
+        '  xx',
+        ' xxx',
+        'xxxx',
+        'xxx ',
+        'xx  ',
+    ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
             var maxBloodPerTick = 0.025 * deltaTime;
@@ -200,7 +212,8 @@ var SquishyCreature = function(options) {
             y: i * 200 - 200, 
             width: OrganParameters[i].gridSize.width,
             height: OrganParameters[i].gridSize.height,
-            collisionGroup: 0
+            collisionGroup: 0,
+            collisionDef: OrganParameters[i].collisionDef,
         });
         SquishyCreature.initOrgan(organ);
         organ.renderer = OrganParameters[i].renderer;
