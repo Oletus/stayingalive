@@ -96,13 +96,17 @@ Spring.prototype.minDistance = function() {
     return this.particle1.point.radius + this.particle2.point.radius;
 };
 
+Spring.prototype.maxDistance = function() {
+    return this.distance * 1.5;
+};
+
 var acceleration = function(particle, state) {
     //TODO
     var force = new CVec();
     for (var i = 0; i < particle.springs.length; ++i) {
         force.iadd(particle.springs[i].calculate(state));
     }
-    force.iadd(new CVec((Math.random()-.5)*500, (Math.random()-.5)*500));
+    force.iadd(new CVec((Math.random()-.5)*400, (Math.random()-.5)*400));
     force.iadd(particle.externalForce);
     return force;
 }
@@ -140,6 +144,7 @@ var GamePhysics = function(resizer) {
     Sprite.gl = this.gl;
 
     this.particles = [];
+    this.springs = [];
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -172,6 +177,36 @@ GamePhysics.prototype.update = function(deltaTime) {
         particle.point.x = state.position.x;
         particle.point.y = state.position.y;
     }
+    
+    // Hard constraints
+    for (var j = 0; j < 5; ++j) { // Relaxation
+        // Hard constraints for springs
+        for (var k = 0; k < this.springs.length; ++k) {
+            var minDistance = this.springs[k].minDistance();
+            var maxDistance = this.springs[k].maxDistance();
+            var particle = this.springs[k].particle1;
+            var particle2 = this.springs[k].particle2;
+            var distance = particle.state.position.distance(particle2.state.position);
+            if (distance < minDistance) {
+                var diff = particle.state.position.sub(particle2.state.position);
+                diff.normalize();
+                diff.imul(0.5 * (minDistance - distance));
+                particle.state.position.iadd(diff);
+                particle.state.momentum.iadd(diff);
+                particle2.state.position.isub(diff);
+                particle2.state.momentum.isub(diff);
+            }
+            else if (distance > maxDistance) {
+                var diff = particle.state.position.sub(particle2.state.position);
+                diff.normalize();
+                diff.imul(-0.5 * (distance - maxDistance));
+                particle.state.position.iadd(diff);
+                particle2.state.position.isub(diff);
+            }
+        }
+        // Hard constraints for all other particles in the scene
+        // TODO: Implement and optimize this with a grid-based acceleration structure
+    }
 };
 
 GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) {
@@ -188,9 +223,9 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
 
 GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
-        width: 2,
-        height: 2,
-        initScale: 100
+        width: 3,
+        height: 3,
+        initScale: 50
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -229,17 +264,15 @@ GamePhysics.prototype.generateMesh = function(options) {
     for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
-            var x = -0.5 + sx/width;
-            var y = 0.5 - sy/height;
             var point = {
-                x: x,
-                y: y,
-                radius: Math.min(0.4, Math.max(0, Math.random() * (1.0 - Math.abs(x) - Math.abs(y))/3) + 0.3) * obj.initScale,
+                x: sx * obj.initScale,
+                y: sy * obj.initScale,
+                radius: 0.45 * obj.initScale,
             };
             grid.positions.push(point);
 
-            var springs = []; //[new Spring(new CVec(point.x*obj.initScale, point.y*obj.initScale), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
-            var state = new State(new CVec(point.x*obj.initScale/2, point.y*obj.initScale/2));
+            var springs = [];
+            var state = new State(new CVec(point.x, point.y));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
@@ -250,22 +283,27 @@ GamePhysics.prototype.generateMesh = function(options) {
         for (var sy = 0; sy <= height; ++sy) {
             var particle = gridparticles[sx][sy];
             // Horizontal / vertical springs
-            if (sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy], false));
-            if (sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy], false));
-            if (sy > 0) particle.springs.push(createSpring(particle, gridparticles[sx][sy-1], false));
-            if (sy < height) particle.springs.push(createSpring(particle, gridparticles[sx][sy+1], false));
+            if (sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy], false));
+            if (sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy], false));
+            if (sy > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy-1], false));
+            if (sy < height) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy+1], false));
             // Diagonal springs
-            if (sy < height && sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy+1], true));
-            if (sy > 0 && sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy-1], true));
-            if (sy < height && sx > 0) particle.springs.push(createSpring(particle, gridparticles[sx-1][sy+1], true));
-            if (sy > 0 && sx < width) particle.springs.push(createSpring(particle, gridparticles[sx+1][sy-1], true));
+            if (sy < height && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy+1], true));
+            if (sy > 0 && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy-1], true));
+            if (sy < height && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy+1], true));
+            if (sy > 0 && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy-1], true));
         }
     }
 
+    // This might help if the specific order that the spring hard constraints are solved in is causing trouble
+    //this.springs = arrayUtil.shuffle(this.springs);
+    
     return grid;
 }
 
-var createSpring = function(particle, target, diagonal) {
-    var stiffness = 50;
-    return new Spring(target.state_last.position, stiffness, 0.9, particle.state.position.distance(target.state.position), particle, target);
+GamePhysics.prototype.createSpring = function(particle, target, diagonal) {
+    var stiffness = diagonal ? 50 : 20;
+    var spring = new Spring(target.state_last.position, stiffness, 0.9, particle.state.position.distance(target.state.position), particle, target);
+    this.springs.push(spring);
+    return spring;
 }
