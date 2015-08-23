@@ -75,10 +75,14 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
         var pos = SoftBodyRenderer.getGridPosition(grid, x2, y2);
         var xInner = x2 == 0 ? 1 : x2 - 1;
         var yInner = y2 == 0 ? 1 : y2 - 1;
-        var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
-        var diff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
-        diff.normalize();
-        diff.scale(pos.radius);
+        if (xInner < 0 || yInner < 0 || xInner > grid.width || yInner > grid.height) {
+            var diff = new Vec2(0, 0);
+        } else {
+            var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
+            var diff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
+            diff.normalize();
+            diff.scale(pos.radius);
+        }
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;
     }
@@ -88,11 +92,15 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
         var xInner = x2 == 0 ? 1 : x2 - 1;
         var pos1 = SoftBodyRenderer.getGridPosition(grid, x2, y - 1);
         var pos2 = SoftBodyRenderer.getGridPosition(grid, x2, y);
-        var pos1Inner = SoftBodyRenderer.getGridPosition(grid, xInner, y - 1);
-        var pos2Inner = SoftBodyRenderer.getGridPosition(grid, xInner, y);
         var pos = new Vec2((pos1.x + pos2.x) * 0.5, (pos1.y + pos2.y) * 0.5);
-        var diff = new Vec2(pos.x - (pos1Inner.x + pos2Inner.x) * 0.5, pos.y - (pos1Inner.y + pos2Inner.y) * 0.5);
-        diff.normalize();
+        var posDiff = new Vec2(pos2.x - pos1.x, pos2.y - pos1.y);
+        var angle = posDiff.angle();
+        if (x == 0) {
+            angle += Math.PI * 0.5; // normal angle
+        } else {
+            angle -= Math.PI * 0.5; // normal angle
+        }
+        var diff = new Vec2(Math.cos(angle), Math.sin(angle));
         diff.scale((pos1.radius + pos2.radius) * 0.5);
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;
@@ -103,11 +111,15 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
         var yInner = y2 == 0 ? 1 : y2 - 1;
         var pos1 = SoftBodyRenderer.getGridPosition(grid, x - 1, y2);
         var pos2 = SoftBodyRenderer.getGridPosition(grid, x, y2);
-        var pos1Inner = SoftBodyRenderer.getGridPosition(grid, x - 1, yInner);
-        var pos2Inner = SoftBodyRenderer.getGridPosition(grid, x, yInner);
         var pos = new Vec2((pos1.x + pos2.x) * 0.5, (pos1.y + pos2.y) * 0.5);
-        var diff = new Vec2(pos.x - (pos1Inner.x + pos2Inner.x) * 0.5, pos.y - (pos1Inner.y + pos2Inner.y) * 0.5);
-        diff.normalize();
+        var posDiff = new Vec2(pos2.x - pos1.x, pos2.y - pos1.y);
+        var angle = posDiff.angle();
+        if (y != 0) {
+            angle += Math.PI * 0.5; // normal angle
+        } else {
+            angle -= Math.PI * 0.5; // normal angle
+        }
+        var diff = new Vec2(Math.cos(angle), Math.sin(angle));
         diff.scale((pos1.radius + pos2.radius) * 0.5);
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;

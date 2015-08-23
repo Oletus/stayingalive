@@ -10,8 +10,8 @@ var SquishyCreature = function(options) {
     this.organs = [];
     this.organRenderers = [];
     
-    var heartRenderer = new SoftBodyRenderer(this.gl, 'test.png');
-    var liverRenderer = new SoftBodyRenderer(this.gl, 'test.png');
+    var heartRenderer = new SoftBodyRenderer(this.gl, 'o_heart.png');
+    var lungRenderer = new SoftBodyRenderer(this.gl, 'test.png');
     var intestineRenderer = new SoftBodyRenderer(this.gl, 'test.png');
 
     var grid;
@@ -21,10 +21,10 @@ var SquishyCreature = function(options) {
     this.organs.push(grid);
 
     grid = this.physics.generateMesh({x: -20, y: -100, width: 4, height: 3});
-    grid.renderer = liverRenderer;
+    grid.renderer = lungRenderer;
     this.organs.push(grid);
 
-    grid = this.physics.generateMesh({x: -500, y: -200, width: 25, height: 1, initScale: 30});
+    grid = this.physics.generateMesh({x: -500, y: -200, width: 25, height: 0, initScale: 30});
     grid.renderer = intestineRenderer;
     this.organs.push(grid);
 };
