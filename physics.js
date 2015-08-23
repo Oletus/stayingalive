@@ -1,7 +1,5 @@
 'use strict';
 
-var PHYSICS_SCALE = 100;
-
 var Particle = function(point, springs, inertia, state) {
     this.point = point;
     if (!(springs instanceof Array)) {
@@ -163,8 +161,8 @@ GamePhysics.prototype.update = function(deltaTime) {
         integrate( particle, state, deltaTime );
 
         // Update points
-        particle.point.x = state.position.x/PHYSICS_SCALE;
-        particle.point.y = state.position.y/PHYSICS_SCALE;
+        particle.point.x = state.position.x;
+        particle.point.y = state.position.y;
     }
 };
 
@@ -173,6 +171,7 @@ GamePhysics.prototype.generateMesh = function(options) {
         width: 3,
         height: 3,
         subdivisions: 1,
+        initScale: 100
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -216,12 +215,12 @@ GamePhysics.prototype.generateMesh = function(options) {
             var point = {
                 x: x,
                 y: y,
-                radius: Math.min(0.5, Math.max(0, Math.random() * (1.0 - Math.abs(x) - Math.abs(y))/3) + 0.3),
+                radius: Math.min(0.5, Math.max(0, Math.random() * (1.0 - Math.abs(x) - Math.abs(y))/3) + 0.3) * obj.initScale,
             };
             grid.positions.push(point);
 
-            var springs = [new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
-            var state = new State(new CVec(point.x*PHYSICS_SCALE/2, point.y*PHYSICS_SCALE/2));
+            var springs = [new Spring(new CVec(point.x*obj.initScale, point.y*obj.initScale), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
+            var state = new State(new CVec(point.x*obj.initScale/2, point.y*obj.initScale/2));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
@@ -242,5 +241,5 @@ GamePhysics.prototype.generateMesh = function(options) {
 }
 
 var createSpring = function(particle, target) {
-    return new Spring(target.state_last.position, 5, 0.999, (particle.point.radius + target.point.radius) * 50);
+    return new Spring(target.state_last.position, 5, 0.999, (particle.point.radius + target.point.radius) * 0.5);
 }
