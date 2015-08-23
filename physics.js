@@ -1,6 +1,6 @@
 'use strict';
 
-var Particle = function(point, springs, inertia, state) {
+var Particle = function(point, springs, inertia, collisionGroup, state) {
     this.point = point;
     if (!(springs instanceof Array)) {
         springs = [springs];
@@ -9,8 +9,10 @@ var Particle = function(point, springs, inertia, state) {
     this.inertia = inertia ? inertia : 1;
     this.state_last = state ? state : new State();
     this.state = this.state_last.copy();
-    this.externalForce = new CVec(0,0);
+
+    this.collisionGroup = collisionGroup ? collisionGroup : 0;
     this.contacts = [];
+    this.externalForce = new CVec(0,0);
 }
 
 var State = function(position, momentum) {
@@ -204,6 +206,7 @@ GamePhysics.prototype.update = function(deltaTime) {
         for (var i = k+1; i < this.particles.length; ++i) {
             var particle1 = this.particles[k];
             var particle2 = this.particles[i];
+            if (particle1.collisionGroup != particle2.collisionGroup) continue;
             var minDistance = particle1.point.radius + particle2.point.radius;
             var minDistanceSq = minDistance * minDistance;
             var distanceSq = particle1.state.position.distanceSq(particle2.state.position);
@@ -282,7 +285,8 @@ GamePhysics.prototype.generateMesh = function(options) {
         height: 3,
         initScale: 50,
         x: 0,
-        y: 0
+        y: 0,
+        collisionGroup: 0,
     };
     var obj = {};
     objectUtil.initWithDefaults(obj, defaults, options);
@@ -297,6 +301,7 @@ GamePhysics.prototype.generateMesh = function(options) {
     };
 
     var gridparticles = [];
+    var collisionGroup = obj.collisionGroup;
 
     var width = obj.width;
     var height = obj.height;
@@ -312,7 +317,7 @@ GamePhysics.prototype.generateMesh = function(options) {
 
             var springs = [];
             var state = new State(new CVec(point.x, point.y));
-            var particle = new Particle(point, springs, 1, state);
+            var particle = new Particle(point, springs, 1, collisionGroup, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
         }
