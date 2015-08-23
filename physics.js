@@ -230,6 +230,7 @@ GamePhysics.prototype.update = function(deltaTime) {
     // Detect collisions
     for (var k = 0; k < this.particles.length; ++k) {
         var particle1 = this.particles[k];
+        if (!particle1.collides) continue;
         // Maximum bounding area
         if (this.playarea != null) {
             var maxdist = this.playarea.radius;
@@ -244,7 +245,6 @@ GamePhysics.prototype.update = function(deltaTime) {
                 particle1.contacts.push(new Contact(normal, depth, particle1.state_last, this.playarea.state, 10000, 0.9));
             }
         }
-        if (!particle1.collides) continue;
         // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
         // Could also consider testing only edge particles.
         for (var i = k+1; i < this.particles.length; ++i) {
