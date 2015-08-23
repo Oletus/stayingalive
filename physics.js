@@ -303,17 +303,6 @@ GamePhysics.prototype.update = function(deltaTime) {
 };
 
 GamePhysics.prototype.renderDebug = function(ctx) {
-};
-
-GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
-    var positions = grid.positions;
-    for (var j = 0; j < positions.length; ++j) {
-        var pos = positions[j];
-        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
-        ctx.stroke();
-    }
     if (this.playarea != null) {
         var pos = this.playarea.center;
         var radius = this.playarea.radius;
@@ -322,6 +311,21 @@ GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
         ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
         ctx.stroke();
     }
+
+    for (var j = 0; j < this.particles.length; ++j) {
+        var particle = this.particles[j];
+        var pos = particle.point;
+        ctx.fillStyle = particle.collides ? '#fff' : '#f00';
+        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+        ctx.strokeStyle = particle.collides ? '#000' : '#f00';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    ctx.fillStyle = '#fff';
+};
+
+GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
 };
 
 GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) {
