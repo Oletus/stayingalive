@@ -372,6 +372,19 @@ GamePhysics.prototype.generateMesh = function(options) {
             if (sy > 0 && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy-1], true, grid.parameters));
             if (sy < height && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy+1], true, grid.parameters));
             if (sy > 0 && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy-1], true, grid.parameters));
+
+            //Second order
+            // Horizontal / vertical springs
+            if (sx > 1) particle.springs.push(this.createSpring(particle, gridparticles[sx-2][sy], false, grid.parameters));
+            if (sx < width - 1) particle.springs.push(this.createSpring(particle, gridparticles[sx+2][sy], false, grid.parameters));
+            if (sy > 1) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy-2], false, grid.parameters));
+            if (sy < height - 1) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy+2], false, grid.parameters));
+            // Diagonal springs
+            if (sy < height-1 && sx < width-1) particle.springs.push(this.createSpring(particle, gridparticles[sx+2][sy+2], true, grid.parameters));
+            if (sy > 1 && sx > 1) particle.springs.push(this.createSpring(particle, gridparticles[sx-2][sy-2], true, grid.parameters));
+            if (sy < height-1 && sx > 1) particle.springs.push(this.createSpring(particle, gridparticles[sx-2][sy+2], true, grid.parameters));
+            if (sy > 1 && sx < width-1) particle.springs.push(this.createSpring(particle, gridparticles[sx+2][sy-2], true, grid.parameters));
+
         }
     }
 
