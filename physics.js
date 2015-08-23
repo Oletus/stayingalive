@@ -12,7 +12,8 @@ var Particle = function(point, springs, inertia, collisionGroup, state) {
 
     this.collisionGroup = collisionGroup ? collisionGroup : 0;
     this.contacts = [];
-    this.externalForce = new CVec(0,0);
+    this.attachment = null;
+    this.externalForce = new CVec(0,0); //TODO: Needs to be handled by a spring (otherwise the RK4 causes it to oscillate)
 }
 
 var State = function(position, momentum) {
@@ -116,10 +117,12 @@ Spring.prototype.calculate = function(state) {
 };
 
 Spring.prototype.getCurrentDistance = function() {
+    if (this.gridParameters === undefined) return this.distance;
     return this.distance * this.gridParameters.pulseModifier;
 };
 
 Spring.prototype.minDistance = function() {
+    if (particle1 == undefined || particle2 === undefined) return this.getCurrentDistance() * 0.9;
     return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.getCurrentDistance() * 0.9);
 };
 
@@ -135,6 +138,9 @@ var acceleration = function(particle, state) {
     }
     for (var i = 0; i < particle.contacts.length; ++i) {
         force.iadd(particle.contacts[i].calculate(state));
+    }
+    if (particle.attachment != null) {
+        force.iadd(particle.attachment.spring.calculate(state));
     }
     particle.contacts.length = 0;
     force.iadd(new CVec((Math.random()-.5)*400, (Math.random()-.5)*400));
@@ -279,6 +285,23 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
     return nearestParticle;
 };
 
+GamePhysics.prototype.attachPoints = function(point1, point2) {
+    var particle1 = point1.particle;
+    var particle2 = point2.particle;
+    var spring1 = new Spring(particle2.state_last.position, 10000, 0.99);
+    var spring2 = new Spring(particle1.state_last.position, 10000, 0.99);
+    particle1.attachment = {particle: particle2, spring: spring1};
+    particle2.attachment = {particle: particle1, spring: spring2};
+}
+
+GamePhysics.prototype.detachPoint = function(point) {
+    var particle1 = point.particle;
+    if (particle1.attachment == null) return;
+    var particle2 = particle1.attachment.particle;
+    particle1.attachment = null;
+    particle2.attachment = null;
+}
+
 GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
         width: 3,
@@ -319,6 +342,7 @@ GamePhysics.prototype.generateMesh = function(options) {
             var state = new State(new CVec(point.x, point.y));
             var particle = new Particle(point, springs, 1, collisionGroup, state);
             gridparticles[sx][sy] = particle;
+            point.particle = particle;
             this.particles.push(particle);
         }
     }
