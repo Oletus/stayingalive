@@ -226,9 +226,8 @@ GamePhysics.prototype.generateMesh = function(obj) {
             };
             grid.positions.push(point);
 
-            //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10, 0.8)
-            var springs = []; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
-            var state = new State(new CVec(point.x*10, point.y*10));
+            var springs = [new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 1, 0.99)]; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
+            var state = new State(new CVec(point.x*PHYSICS_SCALE/2, point.y*PHYSICS_SCALE/2));
             var particle = new Particle(point, springs, 1, state);
             gridparticles[sx][sy] = particle;
             this.particles.push(particle);
