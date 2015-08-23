@@ -88,7 +88,7 @@ var OrganParameters = [
         }
     },
     contents: {
-        blood: 0.1
+        'blood': 0.1
     },
     innerContents: {
         'air': 3
@@ -112,7 +112,7 @@ var OrganParameters = [
         }
     },
     contents: {
-        blood: 0.5
+        'blood': 0.5
     },
     innerContents: {
         'nutrients': 6
@@ -123,7 +123,7 @@ var OrganParameters = [
 
 var OrganContents = function(options) {
     var defaults = {
-        'blood': 0.1, // liters
+        'blood': 0.0, // liters
         'air': 0.0, // liters
         'oxygen': 0.0, // kg
         'co2': 0.0, // kg
@@ -241,8 +241,8 @@ var SquishyCreature = function(options) {
 
 SquishyCreature.initOrgan = function(organ) {
     organ.name = '';
-    organ.contents = new OrganContents({}); // Contents that are available to blood circulation
-    organ.innerContents = new OrganContents({'blood': 0.0}); // Contents like air in lungs, food in digestion.
+    organ.contents = new OrganContents({'blood':0.1}); // Contents that are available to blood circulation
+    organ.innerContents = new OrganContents({}); // Contents like air in lungs, food in digestion.
     organ.veins = [];
     organ.updateMetabolism = function() {};
     organ.time = 0;
@@ -284,6 +284,35 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
 
     for (var i = 0; i < this.organs.length; ++i) {
         physics.renderDebugGrid(ctx, this.organs[i]);
+        var posIndex = Math.floor(this.organs[i].positions.length * 0.5);
+        var pos = this.organs[i].positions[posIndex];
+        
+        ctx.font = 'bold 15px sans-serif';
+        var currentContents = this.organs[i].contents.current;
+        for (var key in currentContents) {
+            if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.scale(1, -1);
+                ctx.fillStyle = '#f00';
+                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                pos.y += 20;
+                ctx.restore();
+            }
+        }
+
+        var currentContents = this.organs[i].innerContents.current;
+        for (var key in currentContents) {
+            if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.scale(1, -1);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                pos.y += 20;
+                ctx.restore();
+            }
+        }
     }
 
     ctx.restore();
