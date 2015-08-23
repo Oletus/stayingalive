@@ -94,6 +94,8 @@ var Spring = function(point, stiffness, damping, distance, particle1, particle2,
     this.stiffness = stiffness ? stiffness : 10;
     this.damping = damping ? damping : 0.25;
     this.distance = distance ? distance : 0;
+    //TODO: Make factor (1.8) controllable
+    this.maxdistance = distance * 1.8;
 
     this.particle1 = particle1;
     this.particle2 = particle2;
@@ -122,12 +124,14 @@ Spring.prototype.getCurrentDistance = function() {
 };
 
 Spring.prototype.minDistance = function() {
+    //TODO: Make factor (0.9) controllable
     if (particle1 == undefined || particle2 === undefined) return this.getCurrentDistance() * 0.9;
     return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.getCurrentDistance() * 0.9);
 };
 
 Spring.prototype.maxDistance = function() {
-    return this.getCurrentDistance() * 1.8;
+    if (this.gridParameters === undefined) return this.maxdistance;
+    return this.maxdistance * this.gridParameters.pulseModifier;
 };
 
 var acceleration = function(particle, state) {
@@ -243,10 +247,12 @@ GamePhysics.prototype.update = function(deltaTime) {
             var maxDistance = this.springs[k].maxDistance();
             var particle = this.springs[k].particle1;
             var particle2 = this.springs[k].particle2;
-            var distance = particle.state.position.distance(particle2.state.position);
-            if (distance > maxDistance) {
+            var distanceSq = particle.state.position.distanceSq(particle2.state.position);
+            var maxDistanceSq = maxDistance * maxDistance;
+            if (distanceSq > maxDistanceSq) {
                 var diff = particle.state.position.sub(particle2.state.position);
-                diff.normalize();
+                var distance = diff.length();
+                diff.idiv(distance);
                 diff.imul(-0.5 * (distance - maxDistance));
                 particle.state.position.iadd(diff);
                 particle2.state.position.isub(diff);
@@ -288,16 +294,22 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
 GamePhysics.prototype.attachPoints = function(point1, point2) {
     var particle1 = point1.particle;
     var particle2 = point2.particle;
-    var spring1 = new Spring(particle2.state_last.position, 100, 0.9);
-    var spring2 = new Spring(particle1.state_last.position, 100, 0.9);
+    var spring1 = new Spring(particle2.state_last.position, 100, 0.9, 0, particle1, particle2);
+    var spring2 = new Spring(particle1.state_last.position, 100, 0.9, 0, particle2, particle1);
+    spring1.maxdistance = 1;
+    spring2.maxdistance = 1;
     particle1.attachment = {particle: particle2, spring: spring1};
     particle2.attachment = {particle: particle1, spring: spring2};
+    this.springs.push(spring1);
+    this.springs.push(spring2);
 }
 
 GamePhysics.prototype.detachPoint = function(point) {
     var particle1 = point.particle;
     if (particle1.attachment == null) return;
     var particle2 = particle1.attachment.particle;
+    this.springs.remove(particle1.attachment.spring);
+    this.springs.remove(particle2.attachment.spring);
     particle1.attachment = null;
     particle2.attachment = null;
 }
