@@ -93,11 +93,11 @@ Spring.prototype.calculate = function(state) {
 }
 
 Spring.prototype.minDistance = function() {
-    return this.particle1.point.radius + this.particle2.point.radius;
+    return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.distance * 0.9);
 };
 
 Spring.prototype.maxDistance = function() {
-    return this.distance * 1.5;
+    return this.distance * 1.8;
 };
 
 var acceleration = function(particle, state) {
