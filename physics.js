@@ -288,8 +288,8 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
 GamePhysics.prototype.attachPoints = function(point1, point2) {
     var particle1 = point1.particle;
     var particle2 = point2.particle;
-    var spring1 = new Spring(particle2.state_last.position, 10000, 0.99);
-    var spring2 = new Spring(particle1.state_last.position, 10000, 0.99);
+    var spring1 = new Spring(particle2.state_last.position, 100, 0.9);
+    var spring2 = new Spring(particle1.state_last.position, 100, 0.9);
     particle1.attachment = {particle: particle2, spring: spring1};
     particle2.attachment = {particle: particle1, spring: spring2};
 }
