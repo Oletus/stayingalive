@@ -5,6 +5,7 @@ var SquishyCreature = function(options) {
         gl: null,
         physics: null
     };
+    this.time = 0.0;
     objectUtil.initWithDefaults(this, defaults, options);
     this.organs = [];
     this.organRenderers = [];
@@ -12,10 +13,11 @@ var SquishyCreature = function(options) {
     var heartRenderer = new SoftBodyRenderer(this.gl, 'test.png');
     var liverRenderer = new SoftBodyRenderer(this.gl, 'test.png');
 
-    var grid = this.physics.generateMesh({x: 0, y: 0, width: 2, height: 2});
+    var grid;
+    grid = this.physics.generateMesh({x: 0, y: 0, width: 2, height: 2});
     grid.renderer = heartRenderer;
     this.organs.push(grid);
-    var grid = this.physics.generateMesh({x: -20, y: -200, width: 4, height: 3});
+    grid = this.physics.generateMesh({x: -20, y: -200, width: 4, height: 3});
     grid.renderer = liverRenderer;
     this.organs.push(grid);
     
@@ -28,4 +30,9 @@ SquishyCreature.prototype.render = function(worldTransform) {
 };
 
 SquishyCreature.prototype.update = function(deltaTime) {
+    this.time += deltaTime;
+    var pulseModifier = 1.0 + Math.sin(this.time * 3) * 0.1;
+    for (var i = 0; i < this.organs.length; ++i) {
+        this.organs[i].parameters.pulseModifier = pulseModifier;
+    }
 };

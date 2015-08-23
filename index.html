@@ -125,6 +125,7 @@ Game.prototype.update = function(deltaTime) {
         part.externalForce = cursor.sub(part.state.position).imul(90);
         console.log(part);
     }
+    this.squishyCreature.update(deltaTime);
 };
 
 var DEV_MODE = (window.location.href.indexOf("?devMode") != -1);

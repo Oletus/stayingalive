@@ -67,19 +67,21 @@ Derivative.prototype.imul = function(scalar) {
     return this;
 }
 
-var Spring = function(point, stiffness, damping, distance, particle1, particle2) {
+var Spring = function(point, stiffness, damping, distance, particle1, particle2, gridParameters) {
     this.point = point ? point : new CVec(0,0);
     this.stiffness = stiffness ? stiffness : 10;
     this.damping = damping ? damping : 0.25;
     this.distance = distance ? distance : 0;
+
     this.particle1 = particle1;
     this.particle2 = particle2;
+    this.gridParameters = gridParameters;
 }
 
 Spring.prototype.calculate = function(state) {
     var point = this.point;
     var stiffness=this.stiffness, damping=this.damping;
-    var distance = this.distance;
+    var distance = this.getCurrentDistance();
     //x = pt-s.x
     var transform = point.sub(state.position);
     //k * x - s.p*d
@@ -90,14 +92,18 @@ Spring.prototype.calculate = function(state) {
     transform.idiv(length).imul(length-distance);
     //k * t - s.p*d
     return transform.mul(stiffness).sub(state.momentum.mul(damping));
-}
+};
+
+Spring.prototype.getCurrentDistance = function() {
+    return this.distance * this.gridParameters.pulseModifier;
+};
 
 Spring.prototype.minDistance = function() {
-    return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.distance * 0.9);
+    return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.getCurrentDistance() * 0.9);
 };
 
 Spring.prototype.maxDistance = function() {
-    return this.distance * 1.8;
+    return this.getCurrentDistance() * 1.8;
 };
 
 var acceleration = function(particle, state) {
@@ -258,7 +264,10 @@ GamePhysics.prototype.generateMesh = function(options) {
     var grid = {
         width: obj.width,
         height: obj.height,
-        positions: []
+        positions: [],
+        parameters: {
+            pulseModifier: 1
+        }
     };
 
     var gridparticles = [];
@@ -287,15 +296,15 @@ GamePhysics.prototype.generateMesh = function(options) {
         for (var sy = 0; sy <= height; ++sy) {
             var particle = gridparticles[sx][sy];
             // Horizontal / vertical springs
-            if (sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy], false));
-            if (sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy], false));
-            if (sy > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy-1], false));
-            if (sy < height) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy+1], false));
+            if (sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy], false, grid.parameters));
+            if (sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy], false, grid.parameters));
+            if (sy > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy-1], false, grid.parameters));
+            if (sy < height) particle.springs.push(this.createSpring(particle, gridparticles[sx][sy+1], false, grid.parameters));
             // Diagonal springs
-            if (sy < height && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy+1], true));
-            if (sy > 0 && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy-1], true));
-            if (sy < height && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy+1], true));
-            if (sy > 0 && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy-1], true));
+            if (sy < height && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy+1], true, grid.parameters));
+            if (sy > 0 && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy-1], true, grid.parameters));
+            if (sy < height && sx > 0) particle.springs.push(this.createSpring(particle, gridparticles[sx-1][sy+1], true, grid.parameters));
+            if (sy > 0 && sx < width) particle.springs.push(this.createSpring(particle, gridparticles[sx+1][sy-1], true, grid.parameters));
         }
     }
 
@@ -305,9 +314,9 @@ GamePhysics.prototype.generateMesh = function(options) {
     return grid;
 }
 
-GamePhysics.prototype.createSpring = function(particle, target, diagonal) {
+GamePhysics.prototype.createSpring = function(particle, target, diagonal, gridParameters) {
     var stiffness = diagonal ? 50 : 20;
-    var spring = new Spring(target.state_last.position, stiffness, 0.9, particle.state.position.distance(target.state.position), particle, target);
+    var spring = new Spring(target.state_last.position, stiffness, 0.9, particle.state.position.distance(target.state.position), particle, target, gridParameters);
     this.springs.push(spring);
     return spring;
 }
