@@ -231,7 +231,6 @@ GamePhysics.prototype.update = function(deltaTime) {
             var particle2 = this.particles[i];
             if (!particle2.collides) continue;
             if (particle1.collisionGroup != particle2.collisionGroup) continue;
-            if (particle1.point.grid === particle2.point.grid) continue;
             var minDistance = particle1.point.getRadius() + particle2.point.getRadius();
             var minDistanceSq = minDistance * minDistance;
             var distanceSq = particle1.state.position.distanceSq(particle2.state.position);
