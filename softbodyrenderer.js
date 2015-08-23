@@ -17,7 +17,7 @@ var SoftBodyRenderer = function(gl, src) {
  *     {
  *        x: {number}
  *        y: {number}
- *        radius: {number}
+ *        getRadius: {function returning number}
  *     }
  *   ]
  * }
@@ -81,7 +81,7 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
             var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
             var diff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
             diff.normalize();
-            diff.scale(pos.radius);
+            diff.scale(pos.getRadius());
         }
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;
@@ -101,7 +101,7 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
             angle -= Math.PI * 0.5; // normal angle
         }
         var diff = new Vec2(Math.cos(angle), Math.sin(angle));
-        diff.scale((pos1.radius + pos2.radius) * 0.5);
+        diff.scale((pos1.getRadius() + pos2.getRadius()) * 0.5);
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;
     }
@@ -120,7 +120,7 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
             angle -= Math.PI * 0.5; // normal angle
         }
         var diff = new Vec2(Math.cos(angle), Math.sin(angle));
-        diff.scale((pos1.radius + pos2.radius) * 0.5);
+        diff.scale((pos1.getRadius() + pos2.getRadius()) * 0.5);
         target[arrInd] = pos.x + diff.x;
         target[arrInd + 1] = pos.y + diff.y;
     }
