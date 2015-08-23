@@ -390,14 +390,14 @@ GamePhysics.prototype.generateMesh = function(options) {
 
     var collides = null;
     if (collisionDef != null) {
-        if (collisionDef.length != height) throw "Collision Definition for mesh doesn't align to mesh";
+        if (collisionDef.length != height+1) throw "Collision Definition for mesh doesn't align to mesh";
         collides = [];
         for (var sy = 0; sy < collisionDef.length; ++sy) {
-            var arr = collisionDef.split('');
-            if (arr.length != width) throw "Collision Definition for mesh doesn't align to mesh";
+            var arr = collisionDef[sy].split('');
+            if (arr.length != width+1) throw "Collision Definition for mesh doesn't align to mesh";
             collides[sy] = [];
             for (var sx = 0; sx < arr.length; ++sx) {
-                collides[sy][sx] = (arr != ' ');
+                collides[sy][sx] = (arr[sx] != ' ');
             }
         }
     }
