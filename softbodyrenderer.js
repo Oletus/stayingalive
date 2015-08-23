@@ -1,7 +1,7 @@
 'use strict';
 
 var SoftBodyRenderer = function(gl, src) {
-    this.testSprite = new Sprite(src, Sprite.loadAsGLTexture(gl));
+    this.sprite = new Sprite(src, Sprite.loadAsGLTexture(gl));
     this.gl = gl;
     this.vertexBuffer = gl.createBuffer();
     this.texCoordBuffer = gl.createBuffer();
@@ -25,12 +25,12 @@ var SoftBodyRenderer = function(gl, src) {
  * @param {Array} worldTransform Transform from world to GL unit coordinates as 4x4 matrix.
  */
 SoftBodyRenderer.prototype.render = function(grid, worldTransform) {
-    if (!this.testSprite.loaded)
+    if (!this.sprite.loaded)
         return;
     
     var gl = this.gl;
     
-    SoftBodyRenderer.shader.use({'u_tex': this.testSprite.texture, 'u_worldTransform': worldTransform});
+    SoftBodyRenderer.shader.use({'u_tex': this.sprite.texture, 'u_worldTransform': worldTransform});
     
     var triangleCount = 4 * (grid.width + 1) * (grid.height + 1);
     var vertexCount = triangleCount * 3;

@@ -350,11 +350,25 @@ var glStateManager = function(gl) {
         -1.0, -1.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    var unitQuadTexCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadTexCoordBuffer);
+    var texCoords = [
+        1.0, 1.0,
+        0.0, 1.0,
+        1.0, 0.0,
+        0.0, 0.0
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-    var useQuadVertexBufferInternal = function() {
+    var useQuadVertexBufferInternal = function(useTexCoordBuffer) {
         gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadVertexBuffer);
         var positionAttribLocation = 0;
         gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
+        if (useTexCoordBuffer === true) {
+            var texCoordAttribLocation = 1;
+            gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadTexCoordBuffer);
+            gl.vertexAttribPointer(texCoordAttribLocation, 2, gl.FLOAT, false, 0, 0);
+        }
     };
 
     var drawFullscreenQuadInternal = function(program, uniforms) {

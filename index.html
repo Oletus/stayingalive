@@ -37,6 +37,7 @@ var Game = function(resizer, physics) {
     this.canvas = resizer.getCanvas();
     this.gl = glUtils.initGl(this.canvas, {}, 4);
     var gl = this.gl;
+    this.glManager = glStateManager(gl);
     gl.disable(gl.CULL_FACE);
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
@@ -44,6 +45,7 @@ var Game = function(resizer, physics) {
     gl.enableVertexAttribArray(1);
     SoftBodyRenderer.loadShaders(gl);
     Sprite.gl = gl;
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     
     var that = this;
     this.canvasUI = new CanvasUI({
@@ -54,6 +56,7 @@ var Game = function(resizer, physics) {
     });
     this.time = 0;
     
+    this.background = new Sprite('background.png', Sprite.loadAsGLTexture(gl));
     this.squishyCreature = new SquishyCreature({gl: gl, physics: physics});
     
     this.draggedParticle = null;
@@ -82,8 +85,13 @@ Game.prototype.render = function(ctx) {
         ctx = this.gl;
     }
     var gl = ctx;
-    gl.clearColor(0.2, 0.2, 0.2, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    /*gl.clearColor(0.2, 0.2, 0.2, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);*/
+    
+    if (this.background.loaded) {
+        this.glManager.useQuadVertexBuffer(true);
+        this.glManager.drawFullscreenQuad(SoftBodyRenderer.shader, {u_worldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], u_tex: this.background.texture});
+    };
     
     this.squishyCreature.render(this.getWorldTransform(ctx.canvas));
     
