@@ -1,5 +1,16 @@
 'use strict';
 
+var Point = function(grid, x, y, radius) {
+    this.grid = grid;
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+}
+
+Point.prototype.getRadius = function() {
+    return this.radius * this.grid.parameters.pulseModifier;
+}
+
 var Particle = function(point, springs, inertia, collisionGroup, state) {
     this.point = point;
     if (!(springs instanceof Array)) {
@@ -126,7 +137,7 @@ Spring.prototype.getCurrentDistance = function() {
 Spring.prototype.minDistance = function() {
     //TODO: Make factor (0.9) controllable
     if (particle1 == undefined || particle2 === undefined) return this.getCurrentDistance() * 0.9;
-    return Math.max(this.particle1.point.radius + this.particle2.point.radius, this.getCurrentDistance() * 0.9);
+    return Math.max(this.particle1.point.getRadius() + this.particle2.point.getRadius(), this.getCurrentDistance() * 0.9);
 };
 
 Spring.prototype.maxDistance = function() {
@@ -217,7 +228,7 @@ GamePhysics.prototype.update = function(deltaTime) {
             var particle1 = this.particles[k];
             var particle2 = this.particles[i];
             if (particle1.collisionGroup != particle2.collisionGroup) continue;
-            var minDistance = particle1.point.radius + particle2.point.radius;
+            var minDistance = particle1.point.getRadius() + particle2.point.getRadius();
             var minDistanceSq = minDistance * minDistance;
             var distanceSq = particle1.state.position.distanceSq(particle2.state.position);
             if (distanceSq < minDistanceSq) {
@@ -274,7 +285,7 @@ GamePhysics.prototype.renderDebug = function(ctx, grid) {
         var pos = positions[j];
         ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, pos.radius, 0, Math.PI * 2);
+        ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
         ctx.stroke();
     }
 };
@@ -343,11 +354,7 @@ GamePhysics.prototype.generateMesh = function(options) {
     for (var sx = 0; sx <= width; ++sx) {
         gridparticles[sx] = [];
         for (var sy = 0; sy <= height; ++sy) {
-            var point = {
-                x: sx * obj.initScale + obj.x,
-                y: sy * obj.initScale + obj.y,
-                radius: 0.45 * obj.initScale,
-            };
+            var point = new Point(grid, sx * obj.initScale + obj.x, sy * obj.initScale + obj.y, 0.45 * obj.initScale)
             grid.positions.push(point);
 
             var springs = [];
