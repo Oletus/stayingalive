@@ -1,24 +1,37 @@
 'use strict';
 
-var Spring = function(point, stiffness, damping) {
-    this.point = point ? point : new CVec(0,0);
-    this.stiffness = stiffness ? stiffness : 10;
-    this.damping = damping ? damping : 0.25;
-}
+var PHYSICS_SCALE = 100;
 
-var State = function(inertia, point, springs, position, momentum) {
-    this.inertia = inertia ? inertia : 1;
-    this.position = position ? position : new CVec(0,0);
-    this.momentum = momentum ? momentum : new CVec(0,0);
+var Particle = function(point, springs, inertia, state) {
     this.point = point;
     if (!(springs instanceof Array)) {
         springs = [springs];
     }
     this.springs = springs;
+    this.inertia = inertia ? inertia : 1;
+    this.state_last = state ? state : new State();
+    this.state = this.state_last.copy();
+}
+
+var State = function(position, momentum) {
+    this.position = position ? position : new CVec(0,0);
+    this.momentum = momentum ? momentum : new CVec(0,0);
 };
 
+State.prototype.set = function(other) {
+    this.position.set(other.position);
+    this.momentum.set(other.momentum);
+    return this;
+}
+
 State.prototype.copy = function() {
-    return new State(this.inertia, this.point, this.springs, this.position, this.momentum);
+    return new State(this.position.copy(), this.momentum.copy());
+}
+
+State.prototype.iadd = function(derivative) {
+    this.position.iadd(derivative.dx);
+    this.momentum.iadd(derivative.dp);
+    return this;
 }
 
 /**
@@ -55,39 +68,54 @@ Derivative.prototype.imul = function(scalar) {
     return this;
 }
 
-State.prototype.iadd = function(derivative) {
-    this.position.iadd(derivative.dx);
-    this.momentum.iadd(derivative.dp);
-    return this;
+var Spring = function(point, stiffness, damping, distance) {
+    this.point = point ? point : new CVec(0,0);
+    this.stiffness = stiffness ? stiffness : 10;
+    this.damping = damping ? damping : 0.25;
+    this.distance = distance ? distance : 0;
 }
 
-var acceleration = function(state) {
+Spring.prototype.calculate = function(state) {
+    var point = this.point;
+    var stiffness=this.stiffness, damping=this.damping;
+    var distance = this.distance;
+    //x = pt-s.x
+    var transform = point.sub(state.position);
+    //k * x - s.p*d
+    if (distance == 0) return point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping));
+    //|x|
+    var length = transform.length();
+    // t = (|x|-d)(x/|x|)
+    transform.idiv(length).imul(length-distance);
+    //k * t - s.p*d
+    return transform.mul(stiffness).sub(state.momentum.mul(damping));
+}
+
+var acceleration = function(particle, state) {
     //TODO
     var force = new CVec();
-    for (var i = 0; i < state.springs.length; ++i) {
-        var point = state.springs[i].point;
-        var stiffness=state.springs[i].stiffness, damping=state.springs[i].damping;
-        force.iadd(point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping)));
+    for (var i = 0; i < particle.springs.length; ++i) {
+        force.iadd(particle.springs[i].calculate(state));
     }
     return force;
 }
 
-var evaluate = function(initial, dt, derivative) {
+var evaluate = function(particle, initial, dt, derivative) {
     var state = initial.copy().iadd(derivative.mul(dt));
 
     var derivative = new Derivative(
-        state.momentum.div(state.inertia),
-        acceleration(state)
+        state.momentum.div(particle.inertia),
+        acceleration(particle, state)
     );
     return derivative;
 }
 
 var d0 = new Derivative();
-var integrate = function(state, dt) {
-    var d1 = evaluate(state, dt*0.0, d0);
-    var d2 = evaluate(state, dt*0.5, d1);
-    var d3 = evaluate(state, dt*0.5, d2);
-    var d4 = evaluate(state, dt*1.0, d3);
+var integrate = function(particle, state, dt) {
+    var d1 = evaluate(particle, state, dt*0.0, d0);
+    var d2 = evaluate(particle, state, dt*0.5, d1);
+    var d3 = evaluate(particle, state, dt*0.5, d2);
+    var d4 = evaluate(particle, state, dt*1.0, d3);
 
     d2.iadd(d3).imul(2);
     d4.iadd(d1).iadd(d2).imul(1/6);
@@ -103,10 +131,8 @@ var GamePhysics = function(resizer) {
     this.canvas = resizer.getCanvas();
     this.gl = this.canvas.getContext('webgl');
     Sprite.gl = this.gl;
-    this.time = 0;
-    this.testSoftBodyRenderer = new SoftBodyRenderer(this.gl, 'test.png');
-    this.states = [];
-    this.testGrid = this.generateMesh();
+
+    this.particles = [];
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -118,26 +144,34 @@ GamePhysics.prototype.render = function(ctx) {
     }
     var gl = ctx;
 
-    this.testSoftBodyRenderer.render(this.testGrid);
-
     return ctx;
 };
 
 GamePhysics.prototype.update = function(deltaTime) {
     //XXX: An accumulator would probably be a good idea here
 
-    for (var i = 0; i < this.states.length; ++i) {
-        var state = this.states[i];
-        integrate( state, deltaTime );
-        state.point.x = state.position.x/100;
-        state.point.y = state.position.y/100;
+    // Update previous state
+    for (var i = 0; i < this.particles.length; ++i) {
+        var particle = this.particles[i];
+        particle.state_last.set(particle.state);
+    }
+    // Perform integration on all elements
+    for (var i = 0; i < this.particles.length; ++i) {
+        var particle = this.particles[i];
+        var state = particle.state;
+        integrate( particle, state, deltaTime );
+
+        // Update points
+        particle.point.x = state.position.x/PHYSICS_SCALE;
+        particle.point.y = state.position.y/PHYSICS_SCALE;
     }
 };
 
 GamePhysics.prototype.generateMesh = function(obj) {
     var defaults = {
         width: 1,
-        height: 1
+        height: 1,
+        subdivisions: 1,
     };
 
     if (obj === undefined) {
@@ -153,34 +187,61 @@ GamePhysics.prototype.generateMesh = function(obj) {
         width: obj.width,
         height: obj.height,
         positions: [
-            {
-                x: -0.5,
-                y: 0.5,
-                radius: 0.1
-            },
-            {
-                x: -0.5,
-                y: -0.5,
-                radius: 0.1
-            },
-            {
-                x: 0.5,
-                y: 0.5,
-                radius: 0.1
-            },
-            {
-                x: 0.5,
-                y: -0.5,
-                radius: 0.1
-            }
+            // {
+            //     x: -0.5,
+            //     y: 0.5,
+            //     radius: 0.3
+            // },
+            // {
+            //     x: -0.5,
+            //     y: -0.5,
+            //     radius: 0.3
+            // },
+            // {
+            //     x: 0.5,
+            //     y: 0.5,
+            //     radius: 0.3
+            // },
+            // {
+            //     x: 0.5,
+            //     y: -0.5,
+            //     radius: 0.3
+            // }
         ]
     };
 
-    for (var i = 0; i < grid.positions.length; ++i) {
-        var point = grid.positions[i];
-        var springs = [new Spring(new CVec(point.x*100, point.y*100), 10-1*i, 0.8+0.05*i)];
-        var state = new State(i, point, springs);
-        this.states.push(state);
+    var gridparticles = [];
+
+    //FIXME:Having more subdivisions doesn't seem to produce a happy mesh. Is this a render bug?
+    var subs = obj.subdivisions;
+    for (var sx = 0; sx <= subs; ++sx) {
+        gridparticles[sx] = [];
+        for (var sy = 0; sy <= subs; ++sy) {
+            var point = {
+                x: -0.5 + sx/subs,
+                y: 0.5 - sy/subs,
+                radius: 0.3,
+            };
+            grid.positions.push(point);
+
+            //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10, 0.8)
+            var springs = []; //new Spring(new CVec(point.x*PHYSICS_SCALE, point.y*PHYSICS_SCALE), 10-1*i, 0.8+0.05*i)
+            var state = new State(new CVec(point.x, point.y));
+            var particle = new Particle(point, springs, 1, state);
+            gridparticles[sx][sy] = particle;
+            this.particles.push(particle);
+        }
     }
+
+    for (var sx = 0; sx <= subs; ++sx) {
+        for (var sy = 0; sy <= subs; ++sy) {
+            var particle = gridparticles[sx][sy];
+            if (sx > 0) particle.springs.push(new Spring(gridparticles[sx-1][sy].state_last.position, 10, 0.9, 40));
+            if (sx < subs) particle.springs.push(new Spring(gridparticles[sx+1][sy].state_last.position, 10, 0.9, 40));
+            if (sy > 0) particle.springs.push(new Spring(gridparticles[sx][sy-1].state_last.position, 10, 0.9, 40));
+            if (sy < subs) particle.springs.push(new Spring(gridparticles[sx][sy+1].state_last.position, 10, 0.9, 40));
+        }
+    }
+
     return grid;
 }
