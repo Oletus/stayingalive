@@ -12,15 +12,21 @@ var SquishyCreature = function(options) {
     
     var heartRenderer = new SoftBodyRenderer(this.gl, 'test.png');
     var liverRenderer = new SoftBodyRenderer(this.gl, 'test.png');
+    var intestineRenderer = new SoftBodyRenderer(this.gl, 'test.png');
 
     var grid;
-    grid = this.physics.generateMesh({x: 0, y: 0, width: 2, height: 2});
+
+    grid = this.physics.generateMesh({x: 0, y: 100, width: 2, height: 2});
     grid.renderer = heartRenderer;
     this.organs.push(grid);
-    grid = this.physics.generateMesh({x: -20, y: -200, width: 4, height: 3});
+
+    grid = this.physics.generateMesh({x: -20, y: -100, width: 4, height: 3});
     grid.renderer = liverRenderer;
     this.organs.push(grid);
-    
+
+    grid = this.physics.generateMesh({x: -500, y: -200, width: 25, height: 1, initScale: 30});
+    grid.renderer = intestineRenderer;
+    this.organs.push(grid);
 };
 
 SquishyCreature.prototype.render = function(worldTransform) {
