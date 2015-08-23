@@ -168,21 +168,14 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
 };
 
-GamePhysics.prototype.generateMesh = function(obj) {
+GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
-        width: 2,
-        height: 2,
+        width: 3,
+        height: 3,
         subdivisions: 1,
     };
-
-    if (obj === undefined) {
-        obj = {};
-    }
-    for(var key in defaults) {
-        if(!obj.hasOwnProperty(key)) {
-            obj[key] = defaults[key];
-        }
-    }
+    var obj = {};
+    objectUtil.initWithDefaults(obj, defaults, options);
 
     var grid = {
         width: obj.width,

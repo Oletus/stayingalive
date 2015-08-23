@@ -22,6 +22,7 @@ var SoftBodyRenderer = function(gl, src) {
  *   ]
  * }
  * With positions of points forming a rectangular grid in a column-major order.
+ * @param {Array} worldTransform Transform from world to GL unit coordinates as 4x4 matrix.
  */
 SoftBodyRenderer.prototype.render = function(grid, worldTransform) {
     if (!this.testSprite.loaded)
