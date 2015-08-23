@@ -74,6 +74,18 @@ var Game = function(resizer, physics) {
             that.draggedParticle = null;
         }
     };
+    
+    // Canvas to use for debug visualization, possibly UI
+    this.canvas2D = document.createElement('canvas');
+    this.canvas2D.width = this.canvas.width;
+    this.canvas2D.height = this.canvas.height;
+    this.ctx2D = this.canvas2D.getContext('2d');
+    this.canvas2DTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 };
 
 Game.prototype.render = function(ctx) {
@@ -93,6 +105,17 @@ Game.prototype.render = function(ctx) {
     };
     
     this.squishyCreature.render(this.getWorldTransform(ctx.canvas));
+    
+    if (DEV_MODE) {
+        this.ctx2D.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
+        this.ctx2D.fillStyle = '#fff';
+        this.squishyCreature.renderDebug(this.ctx2D, this.getWorldTransform(ctx.canvas));
+    }
+    
+    gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas2D);
+    this.glManager.useQuadVertexBuffer(true);
+    this.glManager.drawFullscreenQuad(SoftBodyRenderer.shader, {u_worldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], u_tex: this.canvas2DTexture});
     
     return ctx;
 };
@@ -130,7 +153,6 @@ Game.prototype.update = function(deltaTime) {
         var part = this.draggedParticle;
         var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
         part.externalForce = cursor.sub(part.state.position).imul(90);
-        console.log(part);
     }
     this.squishyCreature.update(deltaTime);
 };
