@@ -10,6 +10,7 @@ var Particle = function(point, springs, inertia, state) {
     this.state_last = state ? state : new State();
     this.state = this.state_last.copy();
     this.externalForce = new CVec(0,0);
+    this.contacts = [];
 }
 
 var State = function(position, momentum) {
@@ -67,6 +68,24 @@ Derivative.prototype.imul = function(scalar) {
     return this;
 }
 
+var Contact = function(normal, depth, old_state, other_old_state, stiffness, damping) {
+    this.normal = normal ? normal : new CVec(0,0);
+    this.depth = depth ? depth : 0;
+    this.old_state = old_state ? old_state : new State();
+    this.other_old_state = other_old_state ? other_old_state : new State();
+    this.stiffness = stiffness ? stiffness : 10;
+    this.damping = damping ? damping : 0.1;
+}
+
+Contact.prototype.calculate = function(state) {
+    var normal = this.normal;
+    var stiffness=this.stiffness, damping=this.damping;
+    var depth = this.depth;
+    var dot = normal.dot(this.old_state.momentum.sub(this.other_old_state.momentum));
+    //nkd - bn(n.v)
+    return normal.mul(stiffness).mul(depth).sub(normal.mul(damping).mul(dot));
+};
+
 var Spring = function(point, stiffness, damping, distance, particle1, particle2, gridParameters) {
     this.point = point ? point : new CVec(0,0);
     this.stiffness = stiffness ? stiffness : 10;
@@ -85,7 +104,7 @@ Spring.prototype.calculate = function(state) {
     //x = pt-s.x
     var transform = point.sub(state.position);
     //k * x - s.p*d
-    if (distance == 0) return point.sub(state.position).mul(stiffness).sub(state.momentum.mul(damping));
+    if (distance == 0) return transform.mul(stiffness).sub(state.momentum.mul(damping));
     //|x|
     var length = transform.length();
     // t = (|x|-d)(x/|x|)
@@ -112,6 +131,10 @@ var acceleration = function(particle, state) {
     for (var i = 0; i < particle.springs.length; ++i) {
         force.iadd(particle.springs[i].calculate(state));
     }
+    for (var i = 0; i < particle.contacts.length; ++i) {
+        force.iadd(particle.contacts[i].calculate(state));
+    }
+    particle.contacts.length = 0;
     force.iadd(new CVec((Math.random()-.5)*400, (Math.random()-.5)*400));
     force.iadd(particle.externalForce);
     return force;
@@ -173,6 +196,30 @@ GamePhysics.prototype.update = function(deltaTime) {
         var particle = this.particles[i];
         particle.state_last.set(particle.state);
     }
+
+    // Detect collisions
+    for (var k = 0; k < this.particles.length; ++k) {
+        // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
+        // Could also consider testing only edge particles.
+        for (var i = k+1; i < this.particles.length; ++i) {
+            var particle1 = this.particles[k];
+            var particle2 = this.particles[i];
+            var minDistance = particle1.point.radius + particle2.point.radius;
+            var minDistanceSq = minDistance * minDistance;
+            var distanceSq = particle1.state.position.distanceSq(particle2.state.position);
+            if (distanceSq < minDistanceSq) {
+                var normal = particle1.state.position.sub(particle2.state.position);
+                var distance = normal.length();
+                normal.idiv(distance);
+                var depth = minDistance - distance;
+                //normal, depth, old_state, other_old_state, stiffness, damping
+                particle1.contacts.push(new Contact(normal, depth, particle1.state_last, particle2.state_last, 1000, 0.1));
+                particle2.contacts.push(new Contact(normal.inverted(), depth, particle2.state_last, particle1.state_last, 1000, 0.1));
+            }
+        }
+    }
+
+
     // Perform integration on all elements
     for (var i = 0; i < this.particles.length; ++i) {
         var particle = this.particles[i];
@@ -181,54 +228,52 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
     
     // Hard constraints
-    for (var j = 0; j < 5; ++j) { // Relaxation
-        // Hard constraints for springs
-        for (var k = 0; k < this.springs.length; ++k) {
-            var minDistance = this.springs[k].minDistance();
-            var maxDistance = this.springs[k].maxDistance();
-            var particle = this.springs[k].particle1;
-            var particle2 = this.springs[k].particle2;
-            var distance = particle.state.position.distance(particle2.state.position);
-            if (distance < minDistance) {
-                var diff = particle.state.position.sub(particle2.state.position);
-                diff.normalize();
-                diff.imul(0.5 * (minDistance - distance));
-                particle.state.position.iadd(diff);
-                particle.state.momentum.iadd(diff);
-                particle2.state.position.isub(diff);
-                particle2.state.momentum.isub(diff);
-            }
-            else if (distance > maxDistance) {
-                var diff = particle.state.position.sub(particle2.state.position);
-                diff.normalize();
-                diff.imul(-0.5 * (distance - maxDistance));
-                particle.state.position.iadd(diff);
-                particle2.state.position.isub(diff);
-            }
-        }
-        // Hard constraints for all other particles in the scene
-        for (var k = 0; k < this.particles.length; ++k) {
-            // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
-            // Could also consider testing only edge particles.
-            for (var i = 0; i < this.particles.length; ++i) {
-                if (i != k) {
-                    var particle = this.particles[k];
-                    var particle2 = this.particles[i];
-                    var minDistance = particle.point.radius + particle2.point.radius;
-                    var distance = particle.state.position.distance(particle2.state.position);
-                    if (distance < minDistance) {
-                        var diff = particle.state.position.sub(particle2.state.position);
-                        diff.normalize();
-                        diff.imul(0.5 * (minDistance - distance));
-                        particle.state.position.iadd(diff);
-                        particle.state.momentum.iadd(diff);
-                        particle2.state.position.isub(diff);
-                        particle2.state.momentum.isub(diff);
-                    }
-                }
-            }
-        }
-    }
+    // for (var j = 0; j < 5; ++j) { // Relaxation
+    //     // Hard constraints for springs
+    //     for (var k = 0; k < this.springs.length; ++k) {
+    //         var minDistance = this.springs[k].minDistance();
+    //         var maxDistance = this.springs[k].maxDistance();
+    //         var particle = this.springs[k].particle1;
+    //         var particle2 = this.springs[k].particle2;
+    //         var distance = particle.state.position.distance(particle2.state.position);
+    //         if (distance < minDistance) {
+    //             var diff = particle.state.position.sub(particle2.state.position);
+    //             diff.normalize();
+    //             diff.imul(0.5 * (minDistance - distance));
+    //             particle.state.position.iadd(diff);
+    //             particle.state.momentum.iadd(diff);
+    //             particle2.state.position.isub(diff);
+    //             particle2.state.momentum.isub(diff);
+    //         }
+    //         else if (distance > maxDistance) {
+    //             var diff = particle.state.position.sub(particle2.state.position);
+    //             diff.normalize();
+    //             diff.imul(-0.5 * (distance - maxDistance));
+    //             particle.state.position.iadd(diff);
+    //             particle2.state.position.isub(diff);
+    //         }
+    //     }
+    //     // // Hard constraints for all other particles in the scene
+    //     // for (var k = 0; k < this.particles.length; ++k) {
+    //     //     // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
+    //     //     // Could also consider testing only edge particles.
+    //     //     for (var i = k+1; i < this.particles.length; ++i) {
+    //     //         var particle = this.particles[k];
+    //     //         var particle2 = this.particles[i];
+    //     //         var minDistance = particle.point.radius + particle2.point.radius;
+    //     //         var distance = particle.state.position.distance(particle2.state.position);
+    //     //         if (distance < minDistance) {
+    //     //             var diff = particle.state.position.sub(particle2.state.position);
+    //     //             diff.normalize();
+    //     //             diff.imul(0.5 * (minDistance - distance));
+    //     //             particle.state.position.iadd(diff);
+    //     //             particle.state.momentum.iadd(diff);
+    //     //             particle2.state.position.isub(diff);
+    //     //             particle2.state.momentum.isub(diff);
+    //     //         }
+    //     //     }
+    //     // }
+    // }
     
     for (var i = 0; i < this.particles.length; ++i) {
         // Update points
