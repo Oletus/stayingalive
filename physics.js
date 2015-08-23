@@ -198,6 +198,12 @@ var GamePhysics = function(resizer) {
 
     this.particles = [];
     this.springs = [];
+
+    this.playarea = {
+        center: new CVec(0,0),
+        radius: 500,
+        state: new State(),
+    }
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -225,6 +231,20 @@ GamePhysics.prototype.update = function(deltaTime) {
     for (var k = 0; k < this.particles.length; ++k) {
         var particle1 = this.particles[k];
         if (!particle1.collides) continue;
+        // Maximum bounding area
+        if (this.playarea != null) {
+            var maxdist = this.playarea.radius;
+            var center = this.playarea.center;
+            var distanceSq = particle1.state.position.distanceSq(center);
+            var maxdistSq = maxdist * maxdist;
+            if (distanceSq > maxdistSq) {
+                var normal = center.sub(particle1.state.position);
+                var distance = normal.length();
+                normal.idiv(distance);
+                var depth = distance - maxdist;
+                particle1.contacts.push(new Contact(normal, depth, particle1.state_last, this.playarea.state, 10000, 0.9));
+            }
+        }
         // TODO: Optimize this with a grid-based acceleration structure to avoid O(n^2) cost.
         // Could also consider testing only edge particles.
         for (var i = k+1; i < this.particles.length; ++i) {
@@ -289,6 +309,14 @@ GamePhysics.prototype.renderDebug = function(ctx, grid) {
         ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    if (this.playarea != null) {
+        var pos = this.playarea.center;
+        var radius = this.playarea.radius;
+        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
         ctx.stroke();
     }
 };
