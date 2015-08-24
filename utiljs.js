@@ -17,6 +17,16 @@ arrayUtil.filterArray = function(array, arrayToRemove) {
 };
 
 /**
+ * Remove the specified item from an array.
+ */
+arrayUtil.remove = function(array, item) {
+    var index = array.indexOf(item);
+    if (index != -1) {
+        array.splice(index, 1);
+    }
+};
+
+/**
  * @param {Array} array Array to shuffle.
  * @return {Array} A shuffled copy of the array.
  */

@@ -5,6 +5,8 @@
 // oxygen diffused in blood: 0.00035 kg / 1.0l
 // total around: 0.001 kg / 1.0l
 
+// healthy glucose in blood: also around 0.001 kg / 1.0l
+
 var substanceIs = function(match) {
     if (match instanceof Array) {
         return function(key) { return match.indexOf(key) != -1; };
@@ -142,8 +144,8 @@ var OrganContents = function(options) {
         'blood': 0.0, // liters
         'air': 0.0, // liters
         'oxygen': 0.0, // kg
-        'co2': 0.0, // kg
-        'nutrients': 0.0 // kg
+        'co2': 0.0, // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
+        'nutrients': 0.0 // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
     };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
@@ -265,9 +267,9 @@ var VeinSlot = function(options) {
     var defaults = {
         gridPosIndex: 0,
         physics: null,
-        vein: null,
         organ: null,
-        isInput: false
+        isInput: false,
+        vein: null
     };
     objectUtil.initWithDefaults(this, defaults, options);
 };
@@ -275,6 +277,11 @@ var VeinSlot = function(options) {
 VeinSlot.prototype.attachVein = function(vein, veinPosIndex) {
     this.vein = vein;
     this.physics.attachPoints(vein.mesh.positions[veinPosIndex], this.organ.mesh.positions[this.gridPosIndex]);
+};
+
+VeinSlot.prototype.detachVein = function() {
+    this.vein = null;
+    this.physics.detachPoint(this.organ.mesh.positions[this.gridPosIndex]);
 };
 
 /**
@@ -301,6 +308,14 @@ var Organ = function(options) {
 };
 
 Organ.prototype.updateMetabolism = function() {}; // Expected to be set on each object separately
+
+Organ.prototype.update = function(deltaTime) {
+    this.updateMetabolism(deltaTime);
+    for (var i = 0; i < this.veinSlots.length; ++i) {
+        var slot = this.veinSlots[i];
+        //slot.detachVein();
+    }
+};
 
 Organ.prototype.freeVeinSlot = function(mode) {
     var needsToBeInput = false;
@@ -396,6 +411,6 @@ SquishyCreature.prototype.update = function(deltaTime) {
                        (this.organs[i].innerContents.initialTotal + this.organs[i].contents.initialTotal);
         }
         this.organs[i].mesh.parameters.pulseModifier = 0.5 + fillMult * 0.6;
-        this.organs[i].updateMetabolism(deltaTime);
+        this.organs[i].update(deltaTime);
     }
 };

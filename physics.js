@@ -372,8 +372,8 @@ GamePhysics.prototype.detachPoint = function(point) {
     var particle1 = point.particle;
     if (particle1.attachment == null) return;
     var particle2 = particle1.attachment.particle;
-    this.springs.remove(particle1.attachment.spring);
-    this.springs.remove(particle2.attachment.spring);
+    arrayUtil.remove(this.springs, particle1.attachment.spring);
+    arrayUtil.remove(this.springs, particle2.attachment.spring);
     particle1.attachment = null;
     particle2.attachment = null;
 }
