@@ -284,13 +284,21 @@ VeinSlot.prototype.detachVein = function() {
     this.physics.detachPoint(this.organ.mesh.positions[this.gridPosIndex]);
 };
 
+VeinSlot.prototype.getStress = function() {
+    if (this.vein === null) {
+        return 0;
+    }
+    return this.physics.getAttachmentStress(this.organ.mesh.positions[this.gridPosIndex]);
+};
+
 /**
  * @constructor
  */
 var Organ = function(options) {
     var defaults = {
         physics: null,
-        mesh: null
+        mesh: null,
+        time: 0
     };
     objectUtil.initWithDefaults(this, defaults, options);
     this.name = '';
@@ -310,10 +318,14 @@ var Organ = function(options) {
 Organ.prototype.updateMetabolism = function() {}; // Expected to be set on each object separately
 
 Organ.prototype.update = function(deltaTime) {
+    this.time += deltaTime;
     this.updateMetabolism(deltaTime);
     for (var i = 0; i < this.veinSlots.length; ++i) {
         var slot = this.veinSlots[i];
-        //slot.detachVein();
+        if (slot.getStress() > 1.05 && this.time > 3) {
+            console.log(slot.getStress());
+            slot.detachVein();
+        }
     }
 };
 

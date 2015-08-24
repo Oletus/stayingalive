@@ -112,6 +112,7 @@ var Spring = function(point, stiffness, damping, distance, particle1, particle2,
     this.particle1 = particle1;
     this.particle2 = particle2;
     this.gridParameters = gridParameters;
+    this.stress = 0;
 }
 
 Spring.prototype.calculate = function(state) {
@@ -124,6 +125,7 @@ Spring.prototype.calculate = function(state) {
     if (distance == 0) return transform.mul(stiffness).sub(state.momentum.mul(damping));
     //|x|
     var length = transform.length();
+    this.stress = length / this.maxDistance();
     // t = (|x|-d)(x/|x|)
     transform.idiv(length).imul(length-distance);
     //k * t - s.p*d
@@ -377,6 +379,25 @@ GamePhysics.prototype.detachPoint = function(point) {
     particle1.attachment = null;
     particle2.attachment = null;
 }
+
+GamePhysics.prototype.getAttachmentStress = function(point) {
+    var particle1 = point.particle;
+    if (particle1.attachment == null) return 0;
+    var particle2 = particle1.attachment.particle;
+    var particle = particle1;
+    if (particle1.springs.length > particle2.springs.length) {
+        particle = particle2;
+    }
+    // Test stress on particle.springs
+    var maxStress = 0;
+    for (var i = 0; i < particle.springs.length; ++i) {
+        var spring = particle.springs[i];
+        if (spring.stress > maxStress) {
+            maxStress = spring.stress;
+        }
+    }
+    return maxStress;
+};
 
 GamePhysics.prototype.generateMesh = function(options) {
     var defaults = {
