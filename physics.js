@@ -25,7 +25,8 @@ var Particle = function(point, springs, inertia, collisionGroup, state) {
     this.collisionGroup = collisionGroup ? collisionGroup : 0;
     this.contacts = [];
     this.attachment = null;
-    this.externalForce = new CVec(0,0); //TODO: Needs to be handled by a spring (otherwise the RK4 causes it to oscillate)
+    this.externalForce = 0;
+    this.externalForceTarget = null;
 }
 
 var State = function(position, momentum) {
@@ -162,7 +163,12 @@ var acceleration = function(particle, state) {
     }
     particle.contacts.length = 0;
     force.iadd(new CVec((Math.random()-.5)*400, (Math.random()-.5)*400));
-    force.iadd(particle.externalForce);
+    
+    if (particle.externalForce > 0) {
+        var diffToExternal = particle.externalForceTarget.sub(state.position);
+        diffToExternal.imul(particle.externalForce);
+        force.iadd(diffToExternal);
+    }
     return force;
 }
 

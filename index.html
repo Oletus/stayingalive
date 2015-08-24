@@ -62,7 +62,7 @@ var Game = function(resizer, physics) {
     this.draggedParticle = null;
     this.canvasUI.down = function(vec) {
         if (that.draggedParticle != null) {
-            that.setDraggedParticleForce(new CVec(0, 0));
+            that.setDraggedParticleForce(null, 0);
         }
         CanvasUI.prototype.down.apply(that.canvasUI, arguments);
         var veinInfo = that.squishyCreature.getNearestVeinEnding(vec, 50);
@@ -79,7 +79,7 @@ var Game = function(resizer, physics) {
             if (!(that.draggedParticle instanceof Particle)) {
                 that.attachVeinIfPossible(that.draggedParticle);
             }
-            that.setDraggedParticleForce(new CVec(0, 0));
+            that.setDraggedParticleForce(null, 0);
             that.draggedParticle = null;
         }
     };
@@ -167,10 +167,11 @@ Game.prototype.getDraggedParticleAsParticle = function() {
     return part;
 };
 
-Game.prototype.setDraggedParticleForce = function(forceVec) {
+Game.prototype.setDraggedParticleForce = function(forceTarget, force) {
     var part = this.getDraggedParticleAsParticle();
     if (part != null) {
-        part.externalForce = forceVec;
+        part.externalForceTarget = forceTarget;
+        part.externalForce = force;
     }
 };
 
@@ -186,9 +187,9 @@ Game.prototype.update = function(deltaTime) {
     this.time += deltaTime;
     
     if (this.draggedParticle != null) {
-        var part = this.draggedParticle;
         var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
-        this.setDraggedParticleForce(cursor.sub(this.getDraggedParticleAsParticle().state.position).imul(90));
+        var dist = this.getDraggedParticleAsParticle().state.position.distance(cursor);
+        this.setDraggedParticleForce(cursor, Math.sqrt(dist) + 10);
     }
     this.squishyCreature.update(deltaTime);
 };
