@@ -97,6 +97,8 @@ var Game = function(resizer, physics) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    
+    this.hasAttached = false;
 };
 
 var drawText = function(ctx, str, x, y, flipped) {
@@ -152,6 +154,8 @@ Game.prototype.render = function(ctx) {
         } else {
             drawText(this.ctx2D, 'Release vein over a slot to connect', 0, 0, true);
         }
+    } else if (!this.hasAttached && this.time > 10) {
+        drawText(this.ctx2D, 'Drag veins by their ends to detach and attach them', 0, 0, true);
     } else {
         this.squishyCreature.renderHUD(this.ctx2D);
     }
@@ -249,6 +253,7 @@ Game.prototype.attachVeinIfPossible = function(veinInfo) {
     var slot = this.squishyCreature.getNearestFreeVeinSlot(pos, 60);
     if (slot) {
         slot.attachVein(veinInfo.vein, veinInfo.posIndex);
+        this.hasAttached = true;
     }
 };
 
