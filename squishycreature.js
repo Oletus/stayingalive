@@ -70,18 +70,30 @@ var OrganParameters = [
             // Take in less blood if the heart already contains a lot.
             // contents and innerContents correspond to the different chambers of the heart.
             var that = this;
-            var handleChamber = function(contents, iFilter) {
+            var handleChamber = function(contents, slotIndexFilter) {
                 // heart uses around 2 watts of power normally
                 var energy = produceEnergy(2 * deltaTime, contents);
-                
-                var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 - (contents.total() - 0.09) * 0.02 * energy;
+
+                // TODO: Model this so that the pumping actually only affects the pressure of the blood,
+                // and the pressure difference pumps it out.
+                var heartPressure = contents.getPressure();
+
                 for (var i = 0; i < that.veinSlots.length; ++i) {
-                    if (iFilter(i)) {
+                    var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 * energy - (heartPressure - 1.0) * 0.002;
+                    if (slotIndexFilter(i)) {
                         var slot = that.veinSlots[i];
                         if (slot.vein !== null) {
                             if (bloodIntake > 0 && slot.isInput) {
+                                var inputPressure = slot.vein.contents.getPressure();
+                                if (inputPressure < 0.5) {
+                                    bloodIntake *= inputPressure + 0.5;
+                                }
                                 contents.give(slot.vein.contents.take(bloodIntake));
                             } else if (bloodIntake < 0 && !slot.isInput) {
+                                var outputPressure = slot.vein.contents.getPressure();
+                                if (outputPressure > heartPressure + 0.5) {
+                                    bloodIntake *= Math.max(0, 1.0 - (outputPressure - (heartPressure + 0.5)));
+                                }
                                 slot.vein.contents.give(contents.take(-bloodIntake));
                             }
                         }
@@ -225,6 +237,10 @@ OrganContents.prototype.getCapacity = function(key) {
     if (key == 'oxygen') {
         return this.current['blood'] * 0.001;
     }
+};
+
+OrganContents.prototype.getPressure = function() {
+    return this.total() / this.initialTotal;
 };
 
 OrganContents.prototype.take = function(amount, filterFunc) {
