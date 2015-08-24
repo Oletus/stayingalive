@@ -325,10 +325,21 @@ var SquishyCreature = function(options) {
         gl: null,
         physics: null
     };
+
+    this.debug = {};
+    this.debug.showVeins = false;
+    this.debug.showOrgans = true;
+    if (DEV_MODE) {
+    }
+    var datinst = dat.instance;
+    var f1 = datinst.addFolder('Organs');
+    f1.add(this.debug, 'showVeins');
+    f1.add(this.debug, 'showOrgans');
+
     this.time = 0.0;
     objectUtil.initWithDefaults(this, defaults, options);
     this.organs = [];
-    
+
     // Initialize organs
     for (var i = 0; i < OrganParameters.length; ++i) {
         var organMesh = this.physics.generateMesh({
@@ -485,6 +496,8 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
     ctx2d.save();
 
     for (var i = 0; i < this.organs.length; ++i) {
+        if (this.organs[i].name !== 'vein'  && !this.debug.showOrgans) continue;
+        if (this.organs[i].name === 'vein'  && !this.debug.showVeins) continue;
         var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
         var pos = this.organs[i].mesh.positions[posIndex];
 
