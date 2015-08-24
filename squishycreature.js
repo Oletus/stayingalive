@@ -15,6 +15,44 @@ var substanceIs = function(match) {
     }
 };
 
+/**
+ * Produce energy using oxygen and glucose ('nutrients').
+ * @param {number} energyRequested Requested energy in joules.
+ * @return {number} Ratio of how much of the requested energy could be produced.
+ */
+var produceEnergy = function(energyRequested, contents) {
+    // 1 kg of glucose requires roughly 1 kg of oxygen to burn
+    // C6H12O6 + 6 O2 -> 6 CO2 + 6 H20
+    var reactantsAvailable = Math.min(contents.current['nutrients'], contents.current['oxygen']);
+    // Fudge factor: allow only 50% of reactants to participate according to inefficiencies
+    reactantsAvailable *= 0.5;
+    // glucose contains around 16 MJ per kg
+    var reactantsRequired = energyRequested / 16000000;
+    var availability = Math.min(reactantsAvailable / reactantsRequired, 1);
+    contents.take(availability * reactantsRequired, substanceIs('oxygen'));
+    contents.take(availability * reactantsRequired, substanceIs('nutrients'));
+    contents.give({'co2': availability * reactantsRequired});
+    // the resulting water is not simulated
+    return availability;
+};
+
+var passThroughBlood = function(veins, contents) {
+    var totalVeinContents = 0;
+    for (var i = 0; i < veins.length; ++i) {
+        totalVeinContents += veins[i].contents.total();
+    }
+    // Distribute things evenly among veins but only if there's a large enough pressure difference.
+    var evenContents = totalVeinContents / veins.length;
+    for (var i = 0; i < veins.length; ++i) {
+        var extraInVein = veins[i].contents.total() - evenContents;
+        if (extraInVein > 0.02) {
+            contents.give(veins[i].contents.take((extraInVein - 0.02) * 0.2));
+        } else if (extraInVein < -0.02) {
+            veins[i].contents.give(contents.take((-extraInVein - 0.02) * 0.2));
+        }
+    }
+};
+
 var OrganParameters = [
 {
     name: 'heart',
@@ -33,7 +71,10 @@ var OrganParameters = [
             // contents and innerContents correspond to the different chambers of the heart.
             var that = this;
             var handleChamber = function(contents, iFilter) {
-                var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 - (contents.total() - 0.09) * 0.02;
+                // heart uses around 2 watts of power normally
+                var energy = produceEnergy(2 * deltaTime, contents);
+                
+                var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 - (contents.total() - 0.09) * 0.02 * energy;
                 for (var i = 0; i < that.veinSlots.length; ++i) {
                     if (iFilter(i)) {
                         var slot = that.veinSlots[i];
@@ -65,9 +106,17 @@ var OrganParameters = [
             mode: 'input'
         },
         {
+            target: 'intestine',
+            mode: 'output'
+        },
+        {
+            target: 'intestine',
+            mode: 'input'
+        },
+        {
             target: 'lungs',
             mode: 'output'
-        }
+        },
     ]
 },
 {
@@ -83,23 +132,14 @@ var OrganParameters = [
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
-            var totalVeinContents = 0;
-            for (var i = 0; i < this.veins.length; ++i) {
-                totalVeinContents += this.veins[i].contents.total();
-            }
-            // Distribute things evenly among veins but only if there's a large enough pressure difference.
-            var evenContents = totalVeinContents / this.veins.length;
-            for (var i = 0; i < this.veins.length; ++i) {
-                var extraInVein = this.veins[i].contents.total() - evenContents;
-                if (extraInVein > 0.02) {
-                    this.contents.give(this.veins[i].contents.take((extraInVein - 0.02) * 0.2));
-                } else if (extraInVein < -0.02) {
-                    this.veins[i].contents.give(this.contents.take((-extraInVein - 0.02) * 0.2));
-                }
-            }
+            passThroughBlood(this.veins, this.contents);
             // Max capacity of lungs is around 6 liters air.
             // A person breathes in/out around 0.5 liters per breath.
-            var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01;
+            
+            // Assume lungs use 5 watts
+            var energy = produceEnergy(5 * deltaTime, this.contents);
+
+            var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01 * energy;
             if (airIntake > 0) {
                 this.innerContents.current['air'] += airIntake;
             } else {
@@ -126,10 +166,22 @@ var OrganParameters = [
 },
 {
     name: 'intestine',
-    image_src: 'test.png',
-    gridSize: {width: 25, height: 0},
+    collisionDef: [
+        '  xxx',
+        'xxxxx',
+        'xxxxx',
+        'xxxxx',
+        'xxxox',
+        'xoxxx',
+        '  x  '
+    ],
+    image_src: 'o_digestive.png',
+    gridSize: {width: 4, height: 6},
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
+            // Assume the digestive system uses 5 watts
+            var energy = produceEnergy(5 * deltaTime, this.contents);
+            passThroughBlood(this.veins, this.contents);
             /*var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
             for (var i = 0; i < this.veins.length; ++i) {
@@ -161,7 +213,9 @@ var OrganContents = function(options) {
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
     // blood starts out oxygenated
-    this.current['oxygen'] = this.getCapacity('oxygen');
+    this.current['oxygen'] += this.getCapacity('oxygen');
+    // blood should also have nutrients
+    this.current['nutrients'] += this.current['blood'] * 0.001;
     this.initialTotal = this.total();
     this.initial = {};
     objectUtil.initWithDefaults(this.initial, defaults, this.current);
