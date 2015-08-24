@@ -1,5 +1,13 @@
 'use strict';
 
+var DebugSettings = function() {
+    this.springs = {};
+    this.particles = {};
+    this.springs.show = false;
+    this.springs.color = '#0f0';
+    this.particles.show = true;
+}
+
 var Point = function(grid, x, y, radius) {
     this.grid = grid;
     this.x = x;
@@ -212,6 +220,14 @@ var GamePhysics = function(resizer) {
         radius: 500,
         state: new State(),
     }
+
+    this.debug = new DebugSettings();
+    var gui = new dat.GUI();
+    var f1 = gui.addFolder('Springs');
+    f1.add(this.debug.springs, 'show');
+    f1.addColor(this.debug.springs, 'color');
+    var f2 = gui.addFolder('Particles');
+    f2.add(this.debug.particles, 'show');
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -321,26 +337,30 @@ GamePhysics.prototype.renderDebug = function(ctx) {
         ctx.stroke();
     }
 
-    for (var j = 0; j < this.particles.length; ++j) {
-        var particle = this.particles[j];
-        var pos = particle.point;
-        ctx.fillStyle = particle.collides ? '#fff' : '#f00';
-        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
-        ctx.strokeStyle = particle.collides ? '#000' : '#f00';
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
-        ctx.stroke();
+    if (this.debug.particles.show) {
+        for (var j = 0; j < this.particles.length; ++j) {
+            var particle = this.particles[j];
+            var pos = particle.point;
+            ctx.fillStyle = particle.collides ? '#fff' : '#f00';
+            ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+            ctx.strokeStyle = particle.collides ? '#000' : '#f00';
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 
-    for (var j = 0; j < this.springs.length; ++j) {
-        var spring = this.springs[j];
-        var pos1 = spring.particle1.point;
-        var pos2 = spring.particle2.point;
-        ctx.strokeStyle = '#0f0';
-        ctx.beginPath();
-        ctx.moveTo(pos1.x, pos1.y);
-        ctx.lineTo(pos2.x, pos2.y);
-        ctx.stroke();
+    if (this.debug.springs.show) {
+        for (var j = 0; j < this.springs.length; ++j) {
+            var spring = this.springs[j];
+            var pos1 = spring.particle1.point;
+            var pos2 = spring.particle2.point;
+            ctx.strokeStyle = this.debug.springs.color;
+            ctx.beginPath();
+            ctx.moveTo(pos1.x, pos1.y);
+            ctx.lineTo(pos2.x, pos2.y);
+            ctx.stroke();
+        }
     }
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#000';
