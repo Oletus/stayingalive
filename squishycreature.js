@@ -638,13 +638,18 @@ SquishyCreature.prototype.update = function(deltaTime) {
     this.time += deltaTime;
     var pulseModifier = 1.0 + Math.sin(this.time * 3) * 0.1;
     for (var i = 0; i < this.organs.length; ++i) {
-        this.organs[i].time += deltaTime;
-        var fillMult = (this.organs[i].contents.total() / this.organs[i].contents.initialTotal);
-        if (this.organs[i].innerContents.initialTotal > 0) {
-            fillMult = (this.organs[i].innerContents.total() + this.organs[i].contents.total()) / 
-                       (this.organs[i].innerContents.initialTotal + this.organs[i].contents.initialTotal);
+        var organ = this.organs[i];
+        organ.time += deltaTime;
+        var fillMult = (organ.contents.total() / organ.contents.initialTotal);
+        if (organ.innerContents.initialTotal > 0) {
+            fillMult = (organ.innerContents.total() + organ.contents.total()) / 
+                       (organ.innerContents.initialTotal + organ.contents.initialTotal);
         }
-        this.organs[i].mesh.parameters.pulseModifier = 0.5 + fillMult * 0.6;
-        this.organs[i].update(deltaTime);
+        if (organ.mesh.width === 0 || organ.mesh.height === 0) {
+            organ.mesh.parameters.pulseModifier = 0.8 + Math.sqrt(fillMult) * 0.3;
+        } else {
+            organ.mesh.parameters.pulseModifier = 0.5 + fillMult * 0.6;
+        }
+        organ.update(deltaTime);
     }
 };
