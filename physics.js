@@ -344,10 +344,12 @@ GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
 GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) {
     var nearestParticle = null;
     for (var i = 0; i < this.particles.length; ++i) {
-        var distance = this.particles[i].state.position.distance(worldPos);
-        if (distance < smallestDistance) {
-            nearestParticle = this.particles[i];
-            smallestDistance = distance;
+        if (this.particles[i].collides) {
+            var distance = this.particles[i].state.position.distance(worldPos);
+            if (distance < smallestDistance) {
+                nearestParticle = this.particles[i];
+                smallestDistance = distance;
+            }
         }
     }
     return nearestParticle;
