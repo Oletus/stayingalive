@@ -117,6 +117,8 @@ var OrganParameters = [
     innerContents: {
         'blood': 0.09
     },
+    contentsName: 'left chamber',
+    innerContentsName: 'right chamber',
     defaultVeins: [
         {
             target: 'lungs',
@@ -186,6 +188,8 @@ var OrganParameters = [
     innerContents: {
         'air': 3
     },
+    contentsName: 'blood vessels',
+    innerContentsName: 'bronchi',
     defaultVeins: [
         {
             target: 'airhose',
@@ -228,6 +232,8 @@ var OrganParameters = [
     innerContents: {
         'hamburgers': 0.5
     },
+    contentsName: 'blood vessels',
+    innerContentsName: 'intestines',
     defaultVeins: []
 },
 {
@@ -259,7 +265,7 @@ var OrganParameters = [
 }
 ];
 
-var OrganContents = function(options) {
+var OrganContents = function(options, name) {
     var defaults = {
         'blood': 0.0, // liters
         'air': 0.0, // liters
@@ -276,6 +282,7 @@ var OrganContents = function(options) {
         'nutrients': 'kg',
         'hamburgers': 'kg'
     };
+    this.name = name ? name : 'blood';
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
     // blood starts out oxygenated
@@ -407,8 +414,8 @@ var SquishyCreature = function(options) {
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
         organ.updateMetabolism = OrganParameters[i].updateMetabolism;
-        organ.contents = new OrganContents(OrganParameters[i].contents);
-        organ.innerContents = new OrganContents(OrganParameters[i].innerContents);
+        organ.contents = new OrganContents(OrganParameters[i].contents, OrganParameters[i].contentsName);
+        organ.innerContents = new OrganContents(OrganParameters[i].innerContents, OrganParameters[i].innerContentsName);
         this.organs.push(organ);
     }
     // Add default veins
@@ -572,6 +579,30 @@ SquishyCreature.prototype.render = function(worldTransform, hilightedSlot) {
 SquishyCreature.prototype.renderHUD = function(ctx2d) {
     ctx2d.save();
 
+    var pos = null;
+    var printLine = function(line) {
+        ctx2d.save();
+        ctx2d.translate(pos.x, pos.y);
+        ctx2d.scale(1, -1);
+        ctx2d.fillText(line, 0, 0);
+        pos.y += 20;
+        ctx2d.restore();
+    };
+    
+    var printCurrentContents = function(contents) {
+        var printed = 0;
+        var currentContents = contents.current;
+        for (var key in currentContents) {
+            if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
+                printLine(contents.prettyPrint(key));
+                printed++;
+            }
+        }
+        if (printed > 0) {
+            printLine(('In ' + contents.name + ':').toUpperCase());
+        }
+    };
+
     for (var i = 0; i < this.organs.length; ++i) {
         if (this.organs[i].name !== 'vein'  && !this.debug.showOrgans) continue;
         if (this.organs[i].name === 'vein'  && !this.debug.showVeins) continue;
@@ -579,31 +610,14 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
         var pos = this.organs[i].mesh.positions[posIndex];
 
         ctx2d.font = 'bold 15px sans-serif';
-        var currentContents = this.organs[i].contents.current;
-        for (var key in currentContents) {
-            if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
-                ctx2d.save();
-                ctx2d.translate(pos.x, pos.y);
-                ctx2d.scale(1, -1);
-                ctx2d.fillStyle = '#f00';
-                ctx2d.fillText(this.organs[i].contents.prettyPrint(key), 0, 0);
-                pos.y += 20;
-                ctx2d.restore();
-            }
-        }
 
-        var currentContents = this.organs[i].innerContents.current;
-        for (var key in currentContents) {
-            if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
-                ctx2d.save();
-                ctx2d.translate(pos.x, pos.y);
-                ctx2d.scale(1, -1);
-                ctx2d.fillStyle = '#fff';
-                ctx2d.fillText(this.organs[i].innerContents.prettyPrint(key), 0, 0);
-                pos.y += 20;
-                ctx2d.restore();
-            }
-        }
+        ctx2d.fillStyle = '#f00';
+        
+        printCurrentContents(this.organs[i].contents);
+
+        ctx2d.fillStyle = '#fff';
+        
+        printCurrentContents(this.organs[i].innerContents);
     }
 
     ctx2d.restore();
