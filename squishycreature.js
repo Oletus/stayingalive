@@ -177,7 +177,15 @@ var OrganParameters = [
     innerContents: {
         'air': 3
     },
-    defaultVeins: []
+    defaultVeins: [
+        {
+            target: 'airhose',
+            sourceMode: 'output',
+            sourceInnerChamber: true,
+            targetInnerChamber: true,
+            contents: { 'air': 0.2 }
+        },
+    ]
 },
 {
     name: 'intestine',
@@ -212,6 +220,29 @@ var OrganParameters = [
     },
     innerContents: {
         'nutrients': 6
+    },
+    defaultVeins: []
+},
+{
+    name: 'airhose',
+    collisionDef: [
+        'xO'
+    ],
+    image_src: 'test.png',
+    gridSize: {width: 1, height: 0},
+    updateMetabolism: function(deltaTime) {
+        if (this.veins.length > 0) {
+            var veinPressure = this.veins[0].contents.getPressure();
+            if (veinPressure > 1.0) {
+                this.veins[0].contents.take(deltaTime * (veinPressure - 1.0));
+            }
+            var pressureMod = 2.0 - Math.max(veinPressure - 1.0, 1.0);
+            this.veins[0].contents.give({'air': deltaTime * pressureMod});
+        }
+    },
+    contents: {},
+    innerContents: {
+        'air': 100
     },
     defaultVeins: []
 }
@@ -367,6 +398,9 @@ var SquishyCreature = function(options) {
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.name = 'vein';
             vein.renderer = SquishyCreature.veinRenderer;
+            if (veinParams.contents) {
+                vein.contents = new OrganContents(veinParams.contents);
+            }
             organ.freeVeinSlot(veinParams.sourceMode).attachVein(vein, 0);
             organ2.freeVeinSlot(undefined, veinParams.targetInnerChamber).attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
