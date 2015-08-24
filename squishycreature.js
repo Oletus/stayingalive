@@ -232,7 +232,7 @@ var OrganParameters = [
         'blood': 0.5
     },
     innerContents: {
-        'nutrients': 6
+        'nutrients': 2
     },
     defaultVeins: []
 },
@@ -545,7 +545,7 @@ SquishyCreature.initRenderers = function(gl) {
         OrganParameters[i].renderer = new SoftBodyRenderer(gl, OrganParameters[i].image_src);
     }
     
-    SquishyCreature.veinRenderer = new SoftBodyRenderer(gl, 'test.png');
+    SquishyCreature.veinRenderer = new SoftBodyRenderer(gl, 'o_vein.png');
 };
 
 SquishyCreature.prototype.findOrganByName = function(name) {

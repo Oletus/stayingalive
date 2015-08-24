@@ -379,12 +379,14 @@ GamePhysics.prototype.renderHUD = function(ctx) {
         for (var j = 0; j < this.springs.length; ++j) {
             var spring = this.springs[j];
             var pos1 = spring.particle1.point;
-            var pos2 = spring.particle2.point;
-            ctx.strokeStyle = this.debug.springs.color;
-            ctx.beginPath();
-            ctx.moveTo(pos1.x, pos1.y);
-            ctx.lineTo(pos2.x, pos2.y);
-            ctx.stroke();
+            if (spring.particle2 !== null) {
+                var pos2 = spring.particle2.point;
+                ctx.strokeStyle = this.debug.springs.color;
+                ctx.beginPath();
+                ctx.moveTo(pos1.x, pos1.y);
+                ctx.lineTo(pos2.x, pos2.y);
+                ctx.stroke();
+            }
         }
     }
     ctx.restore();
