@@ -407,8 +407,8 @@ GamePhysics.prototype.attachPoints = function(point1, point2) {
     var particle2 = point2.particle;
     var spring1 = new Spring(particle2.state_last.position, 100, 0.9, 0, particle1, particle2);
     var spring2 = new Spring(particle1.state_last.position, 100, 0.9, 0, particle2, particle1);
-    spring1.maxdistance = 1;
-    spring2.maxdistance = 1;
+    spring1.maxdistance = 8;
+    spring2.maxdistance = 8;
     particle1.attachment = {particle: particle2, spring: spring1};
     particle2.attachment = {particle: particle1, spring: spring2};
     this.springs.push(spring1);
