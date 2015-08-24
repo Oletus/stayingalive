@@ -279,6 +279,7 @@ GamePhysics.prototype.update = function(deltaTime) {
         // Hard constraints for springs
         for (var k = 0; k < this.springs.length; ++k) {
             var maxDistance = this.springs[k].maxDistance();
+            if (maxDistance <= 0) return;
             var particle = this.springs[k].particle1;
             var particle2 = this.springs[k].particle2;
             var distanceSq = particle.state.position.distanceSq(particle2.state.position);
