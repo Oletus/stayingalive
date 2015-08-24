@@ -409,7 +409,7 @@ GamePhysics.prototype.generateMesh = function(options) {
         collides = [];
         // Flip y because our world vertical axis is towards top, and code/images vertical is towards bottom
         for (var sy = collisionDef.length - 1; sy >= 0; --sy) {
-            var arr = collisionDef[sy].split('');
+            var arr = collisionDef[sy];
             if (arr.length != width+1) throw "Collision Definition for mesh doesn't align to mesh";
             collides[collisionDef.length - 1 - sy] = [];
             for (var sx = 0; sx < arr.length; ++sx) {
