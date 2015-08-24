@@ -382,14 +382,17 @@ var SquishyCreature = function(options) {
     };
 
     this.debug = {};
-    this.debug.showVeins = false;
-    this.debug.showOrgans = true;
+    this.debug['Show veins'] = false;
+    this.debug['Show organs'] = true;
     if (DEV_MODE) {
     }
     var datinst = dat.instance;
     var f1 = datinst.addFolder('Organs');
-    f1.add(this.debug, 'showVeins');
-    f1.add(this.debug, 'showOrgans');
+    f1.add(this.debug, 'Show veins');
+    f1.add(this.debug, 'Show organs');
+    
+    var that = this;
+    datinst.add({'Scramble veins':function() { that.scrambleVeins(); }}, 'Scramble veins');
 
     this.time = 0.0;
     objectUtil.initWithDefaults(this, defaults, options);
@@ -605,8 +608,8 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
     };
 
     for (var i = 0; i < this.organs.length; ++i) {
-        if (this.organs[i].name !== 'vein'  && !this.debug.showOrgans) continue;
-        if (this.organs[i].name === 'vein'  && !this.debug.showVeins) continue;
+        if (this.organs[i].name !== 'vein'  && !this.debug['Show organs']) continue;
+        if (this.organs[i].name === 'vein'  && !this.debug['Show veins']) continue;
         var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
         var pos = this.organs[i].mesh.positions[posIndex];
 
@@ -678,5 +681,30 @@ SquishyCreature.prototype.update = function(deltaTime) {
             organ.mesh.parameters.pulseModifier = 0.5 + fillMult * 0.6;
         }
         organ.update(deltaTime);
+    }
+};
+
+SquishyCreature.prototype.scrambleVeins = function() {
+    var slots = [];
+    for (var i = 0; i < this.organs.length; ++i) {
+        var organ = this.organs[i];
+        organ.time = 0;
+        if (organ.name !== 'vein' && organ.name !== 'airhose') {
+            for (var j = 0; j < organ.veinSlots.length; ++j) {
+                organ.veinSlots[j].detachVein();
+                slots.push(organ.veinSlots[j]);
+            }
+        }
+    }
+    slots = arrayUtil.shuffle(slots);
+    var k = 0;
+    for (var i = 0; i < this.organs.length; ++i) {
+        var organ = this.organs[i];
+        if (organ.name === 'vein') {
+            slots[k].attachVein(organ, 0);
+            k++;
+            slots[k].attachVein(organ, organ.mesh.positions.length - 1);
+            k++;
+        }
     }
 };
