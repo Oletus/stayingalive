@@ -162,7 +162,7 @@ var OrganParameters = [
             // Assume lungs use 5 watts
             var energy = produceEnergy(5 * deltaTime, this.contents);
 
-            var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01 * energy;
+            var airIntake = (0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01) * energy;
             var airSlot = this.veinSlots[0]; // TODO: Fix the hard-coding here
             
             if (airSlot.vein) {
@@ -185,7 +185,7 @@ var OrganParameters = [
         }
     },
     contents: {
-        'blood': 0.1
+        'blood': 0.02
     },
     innerContents: {
         'air': 3
