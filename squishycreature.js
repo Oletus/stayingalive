@@ -59,8 +59,8 @@ var OrganParameters = [
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
     collisionDef: [
-        'oo ',
-        'iix',
+        'oO ',
+        'iIx',
         'xxx',
     ],
     updateMetabolism: function(deltaTime) {
@@ -222,6 +222,13 @@ var OrganContents = function(options) {
         'co2': 0.0, // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
         'nutrients': 0.0 // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
     };
+    this.units = {
+        'blood': 'l',
+        'air': 'l',
+        'oxygen': 'kg',
+        'co2': 'kg',
+        'nutrients': 'kg'
+    };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
     // blood starts out oxygenated
@@ -289,6 +296,28 @@ OrganContents.prototype.total = function(filterFunc) {
         total += this.current[matchingSubstances[i]];
     }
     return total;
+};
+
+OrganContents.prototype.prettyPrint = function(key) {
+    var unit = this.units[key];
+    var val = this.current[key];
+    if (val < 0.0005) {
+        val *= 1000000;
+        if (unit == 'kg') {
+            unit = 'mg';
+        } else {
+            unit = 'µ' + unit;
+        }
+    }
+    else if (val < 0.5) {
+        val *= 1000;
+        if (unit == 'kg') {
+            unit = 'g';
+        } else {
+            unit = 'm' + unit;
+        }
+    }
+    return key + ': ' + val.toFixed(1) + ' ' + unit;
 };
 
 var SquishyCreature = function(options) {
@@ -395,10 +424,9 @@ var Organ = function(options) {
     this.veins = [];
     this.veinSlots = [];
     for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
-        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.veinIndices[i], organ: this, physics: this.physics}));
-    }
-    for (var i = 0; i < this.mesh.inputVeinIndices.length; ++i) {
-        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.inputVeinIndices[i], organ: this, physics: this.physics, isInput: true}));
+        var index = this.mesh.veinIndices[i];
+        var isInput = index.type == 'i' || index.type == 'I';
+        this.veinSlots.push(new VeinSlot({gridPosIndex: index.index, organ: this, physics: this.physics, isInput: isInput}));
     }
     this.time = 0;
 };
@@ -468,7 +496,7 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
                 ctx2d.translate(pos.x, pos.y);
                 ctx2d.scale(1, -1);
                 ctx2d.fillStyle = '#f00';
-                ctx2d.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx2d.fillText(this.organs[i].contents.prettyPrint(key), 0, 0);
                 pos.y += 20;
                 ctx2d.restore();
             }
@@ -481,7 +509,7 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
                 ctx2d.translate(pos.x, pos.y);
                 ctx2d.scale(1, -1);
                 ctx2d.fillStyle = '#fff';
-                ctx2d.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx2d.fillText(this.organs[i].innerContents.prettyPrint(key), 0, 0);
                 pos.y += 20;
                 ctx2d.restore();
             }

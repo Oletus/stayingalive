@@ -469,7 +469,6 @@ GamePhysics.prototype.generateMesh = function(options) {
         height: obj.height,
         positions: [],
         veinIndices: [],
-        inputVeinIndices: [],
         parameters: {
             pulseModifier: 1
         }
@@ -489,10 +488,8 @@ GamePhysics.prototype.generateMesh = function(options) {
             for (var sx = 0; sx < arr.length; ++sx) {
                 // Flip y because our world vertical axis is towards top, and code/images vertical is towards bottom
                 collides[collisionDef.length - 1 - sy][sx] = (arr[sx] != ' ');
-                if (arr[sx] == 'o') {
-                    grid.veinIndices.push(sx * (height + 1) + collisionDef.length - 1 - sy);
-                } else if (arr[sx] == 'i') {
-                    grid.inputVeinIndices.push(sx * (height + 1) + collisionDef.length - 1 - sy);
+                if (arr[sx] != 'x' && arr[sx] != ' ') {
+                    grid.veinIndices.push({type: arr[sx], index: sx * (height + 1) + collisionDef.length - 1 - sy});
                 }
             }
         }
