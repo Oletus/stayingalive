@@ -687,7 +687,7 @@ SquishyCreature.prototype.scrambleVeins = function() {
     var k = 0;
     for (var i = 0; i < this.organs.length; ++i) {
         var organ = this.organs[i];
-        if (organ.name === 'vein') {
+        if (organ.name === 'vein' && !organ.isAttachedFrom(0) && !organ.isAttachedFrom(organ.mesh.positions.length - 1)) {
             slots[k].attachVein(organ, 0);
             k++;
             slots[k].attachVein(organ, organ.mesh.positions.length - 1);
