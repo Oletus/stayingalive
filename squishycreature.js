@@ -29,11 +29,14 @@ var OrganParameters = [
             // It typically contains 0.100 liters to 0.250 liters of blood.
             // Take in less blood if the heart already contains a lot.
             var bloodIntake = 0.07 * deltaTime * Math.sin(this.time * 3.0) * 1.5 - (this.contents.total() - 0.18) * 0.01;
-            if (bloodIntake > 0) {
-                this.contents.give(this.veins[0].contents.take(bloodIntake));
-            } else {
-                for (var i = 1; i < this.veins.length; ++i) {
-                    this.veins[i].contents.give(this.contents.take(-bloodIntake));
+            for (var i = 0; i < this.veinSlots.length; ++i) {
+                var slot = this.veinSlots[i];
+                if (slot.vein !== null) {
+                    if (bloodIntake > 0 && slot.isInput) {
+                        this.contents.give(slot.vein.contents.take(bloodIntake));
+                    } else if (bloodIntake < 0 && !slot.isInput) {
+                        slot.vein.contents.give(this.contents.take(-bloodIntake));
+                    }
                 }
             }
         }
@@ -46,9 +49,11 @@ var OrganParameters = [
     defaultVeins: [
         {
             target: 'lungs',
+            mode: 'input'
         },
         {
             target: 'lungs',
+            mode: 'output'
         }
     ]
 },
@@ -246,8 +251,7 @@ var SquishyCreature = function(options) {
             });
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.renderer = SquishyCreature.veinRenderer;
-            // TODO: Attach vein to organs with springs/constraints
-            organ.freeVeinSlot().attachVein(vein, 0);
+            organ.freeVeinSlot(veinParams.mode).attachVein(vein, 0);
             organ2.freeVeinSlot().attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
 
@@ -262,7 +266,8 @@ var VeinSlot = function(options) {
         gridPosIndex: 0,
         physics: null,
         vein: null,
-        organ: null
+        organ: null,
+        isInput: false
     };
     objectUtil.initWithDefaults(this, defaults, options);
 };
@@ -289,14 +294,21 @@ var Organ = function(options) {
     for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
         this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.veinIndices[i], organ: this, physics: this.physics}));
     }
+    for (var i = 0; i < this.mesh.inputVeinIndices.length; ++i) {
+        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.inputVeinIndices[i], organ: this, physics: this.physics, isInput: true}));
+    }
     this.time = 0;
 };
 
 Organ.prototype.updateMetabolism = function() {}; // Expected to be set on each object separately
 
-Organ.prototype.freeVeinSlot = function() {
+Organ.prototype.freeVeinSlot = function(mode) {
+    var needsToBeInput = false;
+    if (mode !== undefined && mode === 'input') {
+        needsToBeInput = true;
+    }
     for (var i = 0; i < this.veinSlots.length; ++i) {
-        if (this.veinSlots[i].vein === null) {
+        if (this.veinSlots[i].vein === null && this.veinSlots[i].isInput === needsToBeInput) {
             return this.veinSlots[i];
         }
     }
