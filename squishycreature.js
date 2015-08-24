@@ -22,8 +22,8 @@ var OrganParameters = [
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
     collisionDef: [
-        'xx ',
-        'xxx',
+        'oo ',
+        'oox',
         'xxx',
     ],
     updateMetabolism: function(deltaTime) {
@@ -61,9 +61,9 @@ var OrganParameters = [
     gridSize: {width: 3, height: 4},
     collisionDef: [
         'xx  ',
-        'xxx ',
+        'xox ',
         'xxxx',
-        ' xxx',
+        ' xox',
         '  xx',
     ],
     updateMetabolism: function(deltaTime) {
@@ -240,8 +240,8 @@ var SquishyCreature = function(options) {
             SquishyCreature.initOrgan(vein);
             vein.renderer = SquishyCreature.veinRenderer;
             // TODO: Attach vein to organs with springs/constraints
-            this.physics.attachPoints(vein.positions[0], organ.positions[j]);
-            this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[j]);
+            this.physics.attachPoints(vein.positions[0], organ.positions[organ.veinIndices[j]]);
+            this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[organ2.veinIndices[j]]);
             this.organs.push(vein);
 
             organ.veins.push(vein);

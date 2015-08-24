@@ -395,6 +395,7 @@ GamePhysics.prototype.generateMesh = function(options) {
         width: obj.width,
         height: obj.height,
         positions: [],
+        veinIndices: [],
         parameters: {
             pulseModifier: 1
         }
@@ -407,13 +408,16 @@ GamePhysics.prototype.generateMesh = function(options) {
     if (collisionDef != null) {
         if (collisionDef.length != height+1) throw "Collision Definition for mesh doesn't align to mesh";
         collides = [];
-        // Flip y because our world vertical axis is towards top, and code/images vertical is towards bottom
-        for (var sy = collisionDef.length - 1; sy >= 0; --sy) {
+        for (var sy = 0; sy < collisionDef.length; ++sy) {
             var arr = collisionDef[sy];
             if (arr.length != width+1) throw "Collision Definition for mesh doesn't align to mesh";
             collides[collisionDef.length - 1 - sy] = [];
             for (var sx = 0; sx < arr.length; ++sx) {
+                // Flip y because our world vertical axis is towards top, and code/images vertical is towards bottom
                 collides[collisionDef.length - 1 - sy][sx] = (arr[sx] != ' ');
+                if (arr[sx] == 'o') {
+                    grid.veinIndices.push(sx * (height + 1) + collisionDef.length - 1 - sy);
+                }
             }
         }
     }
