@@ -163,10 +163,15 @@ var OrganParameters = [
             var energy = produceEnergy(5 * deltaTime, this.contents);
 
             var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01 * energy;
-            if (airIntake > 0) {
-                this.innerContents.current['air'] += airIntake;
-            } else {
-                this.innerContents.take(-airIntake, substanceIs(['co2', 'air']));
+            var airSlot = this.veinSlots[0]; // TODO: Fix the hard-coding here
+            
+            if (airSlot.vein) {
+                if (airIntake > 0) {
+                    this.innerContents.give(airSlot.vein.contents.take(airIntake));
+                } else {
+                    airSlot.vein.contents.give(this.innerContents.take(-airIntake, substanceIs(['co2', 'air'])));
+                    airSlot.vein.contents.give(this.innerContents.take(-airIntake * 0.1)); // slowly eject any unsuitable contents
+                }
             }
             // Oxygenate the blood and remove CO2.
             // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight.
