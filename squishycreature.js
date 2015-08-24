@@ -70,7 +70,7 @@ var OrganParameters = [
             // Take in less blood if the heart already contains a lot.
             // contents and innerContents correspond to the different chambers of the heart.
             var that = this;
-            var handleChamber = function(contents, slotIndexFilter) {
+            var handleChamber = function(contents, handleInnerChamber) {
                 // heart uses around 2 watts of power normally
                 var energy = produceEnergy(2 * deltaTime, contents);
 
@@ -80,8 +80,8 @@ var OrganParameters = [
 
                 for (var i = 0; i < that.veinSlots.length; ++i) {
                     var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 * energy - (heartPressure - 1.0) * 0.002;
-                    if (slotIndexFilter(i)) {
-                        var slot = that.veinSlots[i];
+                    var slot = that.veinSlots[i];
+                    if (slot.isInnerChamber == handleInnerChamber) {
                         if (slot.vein !== null) {
                             if (bloodIntake > 0 && slot.isInput) {
                                 var inputPressure = slot.vein.contents.getPressure();
@@ -100,10 +100,9 @@ var OrganParameters = [
                     }
                 }
             };
-            
-            var ch1Filter = function(i) {return i % 2 == 0};
-            handleChamber(this.contents, ch1Filter);
-            handleChamber(this.innerContents, function(i) {return !ch1Filter(i);});
+
+            handleChamber(this.contents, false);
+            handleChamber(this.innerContents, true);
         }
     },
     contents: {
@@ -115,19 +114,23 @@ var OrganParameters = [
     defaultVeins: [
         {
             target: 'lungs',
-            mode: 'input'
+            sourceMode: 'input',
+            targetInnerChamber: false
         },
         {
             target: 'intestine',
-            mode: 'output'
+            sourceMode: 'output',
+            targetInnerChamber: false
         },
         {
             target: 'intestine',
-            mode: 'input'
+            sourceMode: 'input',
+            targetInnerChamber: false
         },
         {
             target: 'lungs',
-            mode: 'output'
+            sourceMode: 'output',
+            targetInnerChamber: false
         },
     ]
 },
@@ -136,7 +139,7 @@ var OrganParameters = [
     image_src: 'o_lung_single.png',
     gridSize: {width: 3, height: 4},
     collisionDef: [
-        'xx  ',
+        'Ox  ',
         'xox ',
         'xxxx',
         ' xox',
@@ -364,8 +367,8 @@ var SquishyCreature = function(options) {
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.name = 'vein';
             vein.renderer = SquishyCreature.veinRenderer;
-            organ.freeVeinSlot(veinParams.mode).attachVein(vein, 0);
-            organ2.freeVeinSlot().attachVein(vein, vein.mesh.positions.length - 1);
+            organ.freeVeinSlot(veinParams.sourceMode).attachVein(vein, 0);
+            organ2.freeVeinSlot(undefined, veinParams.targetInnerChamber).attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
         }
     }
@@ -377,6 +380,7 @@ var VeinSlot = function(options) {
         physics: null,
         organ: null,
         isInput: false,
+        isInnerChamber: false,
         vein: null
     };
     objectUtil.initWithDefaults(this, defaults, options);
@@ -426,7 +430,14 @@ var Organ = function(options) {
     for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
         var index = this.mesh.veinIndices[i];
         var isInput = index.type == 'i' || index.type == 'I';
-        this.veinSlots.push(new VeinSlot({gridPosIndex: index.index, organ: this, physics: this.physics, isInput: isInput}));
+        var isInnerChamber = index.type == 'I' || index.type == 'O';
+        this.veinSlots.push(new VeinSlot({
+            gridPosIndex: index.index,
+            organ: this,
+            physics: this.physics,
+            isInput: isInput,
+            isInnerChamber: isInnerChamber
+        }));
     }
     this.time = 0;
 };
@@ -445,13 +456,16 @@ Organ.prototype.update = function(deltaTime) {
     }
 };
 
-Organ.prototype.freeVeinSlot = function(mode) {
+Organ.prototype.freeVeinSlot = function(mode, inInnerChamber) {
     var needsToBeInput = false;
     if (mode !== undefined && mode === 'input') {
         needsToBeInput = true;
     }
     for (var i = 0; i < this.veinSlots.length; ++i) {
-        if (this.veinSlots[i].vein === null && this.veinSlots[i].isInput === needsToBeInput) {
+        if (this.veinSlots[i].vein === null && 
+            this.veinSlots[i].isInput === needsToBeInput &&
+            (inInnerChamber === undefined || this.veinSlots[i].isInnerChamber === inInnerChamber))
+        {
             return this.veinSlots[i];
         }
     }
