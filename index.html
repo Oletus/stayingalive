@@ -130,8 +130,8 @@ Game.prototype.render = function(ctx) {
     this.ctx2D.scale(scaleX, -scaleY);
 
     //TODO: It'd be nice to just have a list of things to loop through, here
-    this.squishyCreature.renderHUD(this.ctx2D);
     this.physics.renderHUD(this.ctx2D);
+    this.squishyCreature.renderHUD(this.ctx2D);
 
     this.ctx2D.restore();
     
