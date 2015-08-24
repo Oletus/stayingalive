@@ -68,20 +68,18 @@ var OrganParameters = [
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
-            var maxBloodPerTick = 0.025 * deltaTime;
             var totalVeinContents = 0;
             for (var i = 0; i < this.veins.length; ++i) {
                 totalVeinContents += this.veins[i].contents.total();
             }
-            // Distribute things as evenly as possible among veins
-            // according to the constraint how much can pass through.
+            // Distribute things evenly among veins but only if there's a large enough pressure difference.
             var evenContents = totalVeinContents / this.veins.length;
             for (var i = 0; i < this.veins.length; ++i) {
                 var extraInVein = this.veins[i].contents.total() - evenContents;
-                if (extraInVein > 0) {
-                    this.contents.give(this.veins[i].contents.take(extraInVein));
-                } else {
-                    this.veins[i].contents.give(this.contents.take(-extraInVein));
+                if (extraInVein > 0.02) {
+                    this.contents.give(this.veins[i].contents.take((extraInVein - 0.02) * 0.2));
+                } else if (extraInVein < -0.02) {
+                    this.veins[i].contents.give(this.contents.take((-extraInVein - 0.02) * 0.2));
                 }
             }
             // Max capacity of lungs is around 6 liters air.
