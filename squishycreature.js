@@ -213,7 +213,7 @@ var SquishyCreature = function(options) {
             collisionGroup: 0,
             collisionDef: OrganParameters[i].collisionDef,
         });
-        SquishyCreature.initOrgan(organ);
+        SquishyCreature.initOrgan(organ, this.physics);
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
         organ.updateMetabolism = OrganParameters[i].updateMetabolism;
@@ -237,11 +237,11 @@ var SquishyCreature = function(options) {
                 collisionGroup: 1,
                 initScale: 25
             });
-            SquishyCreature.initOrgan(vein);
+            SquishyCreature.initOrgan(vein, this.physics);
             vein.renderer = SquishyCreature.veinRenderer;
             // TODO: Attach vein to organs with springs/constraints
-            this.physics.attachPoints(vein.positions[0], organ.positions[organ.veinIndices[j]]);
-            this.physics.attachPoints(vein.positions[vein.positions.length - 1], organ2.positions[organ2.veinIndices[j]]);
+            organ.freeVeinSlot().attachVein(vein, 0);
+            organ2.freeVeinSlot().attachVein(vein, vein.positions.length - 1);
             this.organs.push(vein);
 
             organ.veins.push(vein);
@@ -250,13 +250,40 @@ var SquishyCreature = function(options) {
     }
 };
 
-SquishyCreature.initOrgan = function(organ) {
+var VeinSlot = function(options) {
+    var defaults = {
+        gridPosIndex: 0,
+        physics: null,
+        vein: null,
+        organ: null
+    };
+    objectUtil.initWithDefaults(this, defaults, options);
+};
+
+VeinSlot.prototype.attachVein = function(vein, veinPosIndex) {
+    this.vein = vein;
+    this.physics.attachPoints(vein.positions[veinPosIndex], this.organ.positions[this.gridPosIndex]);
+};
+
+SquishyCreature.initOrgan = function(organ, physics) {
     organ.name = '';
     organ.contents = new OrganContents({'blood':0.1}); // Contents that are available to blood circulation
     organ.innerContents = new OrganContents({}); // Contents like air in lungs, food in digestion.
     organ.veins = [];
+    organ.veinSlots = [];
+    for (var i = 0; i < organ.veinIndices.length; ++i) {
+        organ.veinSlots.push(new VeinSlot({gridPosIndex: organ.veinIndices[i], organ: organ, physics: physics}));
+    }
     organ.updateMetabolism = function() {};
     organ.time = 0;
+    organ.freeVeinSlot = function() {
+        for (var i = 0; i < this.veinSlots.length; ++i) {
+            if (this.veinSlots[i].vein === null) {
+                return this.veinSlots[i];
+            }
+        }
+        return null;
+    };
 };
 
 SquishyCreature.initRenderers = function(gl) {
