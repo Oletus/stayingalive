@@ -36,19 +36,27 @@ var produceEnergy = function(energyRequested, contents) {
     return availability;
 };
 
-var passThroughBlood = function(veins, contents) {
+var passThroughBlood = function(veinSlots, contents) {
     var totalVeinContents = 0;
-    for (var i = 0; i < veins.length; ++i) {
-        totalVeinContents += veins[i].contents.total();
+    var totalVeins = 0;
+    for (var i = 0; i < veinSlots.length; ++i) {
+        var vein = veinSlots[i].vein;
+        if (!veinSlots[i].isInnerChamber && vein !== null) {
+            totalVeinContents += vein.contents.total();
+            ++totalVeins;
+        }
     }
     // Distribute things evenly among veins but only if there's a large enough pressure difference.
-    var evenContents = totalVeinContents / veins.length;
-    for (var i = 0; i < veins.length; ++i) {
-        var extraInVein = veins[i].contents.total() - evenContents;
-        if (extraInVein > 0.02) {
-            contents.give(veins[i].contents.take((extraInVein - 0.02) * 0.2));
-        } else if (extraInVein < -0.02) {
-            veins[i].contents.give(contents.take((-extraInVein - 0.02) * 0.2));
+    var evenContents = totalVeinContents / totalVeins;
+    for (var i = 0; i < veinSlots.length; ++i) {
+        var vein = veinSlots[i].vein;
+        if (!veinSlots[i].isInnerChamber && vein !== null) {
+            var extraInVein = vein.contents.total() - evenContents;
+            if (extraInVein > 0.02) {
+                contents.give(vein.contents.take((extraInVein - 0.02) * 0.2));
+            } else if (extraInVein < -0.02) {
+                vein.contents.give(contents.take((-extraInVein - 0.02) * 0.2));
+            }
         }
     }
 };
@@ -70,7 +78,7 @@ var OrganParameters = [
             // Take in less blood if the heart already contains a lot.
             // contents and innerContents correspond to the different chambers of the heart.
             var that = this;
-            var handleChamber = function(contents, slotIndexFilter) {
+            var handleChamber = function(contents, handleInnerChamber) {
                 // heart uses around 2 watts of power normally
                 var energy = produceEnergy(2 * deltaTime, contents);
 
@@ -80,8 +88,8 @@ var OrganParameters = [
 
                 for (var i = 0; i < that.veinSlots.length; ++i) {
                     var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 * energy - (heartPressure - 1.0) * 0.002;
-                    if (slotIndexFilter(i)) {
-                        var slot = that.veinSlots[i];
+                    var slot = that.veinSlots[i];
+                    if (slot.isInnerChamber == handleInnerChamber) {
                         if (slot.vein !== null) {
                             if (bloodIntake > 0 && slot.isInput) {
                                 var inputPressure = slot.vein.contents.getPressure();
@@ -100,10 +108,9 @@ var OrganParameters = [
                     }
                 }
             };
-            
-            var ch1Filter = function(i) {return i % 2 == 0};
-            handleChamber(this.contents, ch1Filter);
-            handleChamber(this.innerContents, function(i) {return !ch1Filter(i);});
+
+            handleChamber(this.contents, false);
+            handleChamber(this.innerContents, true);
         }
     },
     contents: {
@@ -115,19 +122,23 @@ var OrganParameters = [
     defaultVeins: [
         {
             target: 'lungs',
-            mode: 'input'
+            sourceMode: 'input',
+            targetInnerChamber: false
         },
         {
             target: 'intestine',
-            mode: 'output'
+            sourceMode: 'output',
+            targetInnerChamber: false
         },
         {
             target: 'intestine',
-            mode: 'input'
+            sourceMode: 'input',
+            targetInnerChamber: false
         },
         {
             target: 'lungs',
-            mode: 'output'
+            sourceMode: 'output',
+            targetInnerChamber: false
         },
     ]
 },
@@ -136,7 +147,7 @@ var OrganParameters = [
     image_src: 'o_lung_single.png',
     gridSize: {width: 3, height: 4},
     collisionDef: [
-        'xx  ',
+        'Ox  ',
         'xox ',
         'xxxx',
         ' xox',
@@ -144,7 +155,7 @@ var OrganParameters = [
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
-            passThroughBlood(this.veins, this.contents);
+            passThroughBlood(this.veinSlots, this.contents);
             // Max capacity of lungs is around 6 liters air.
             // A person breathes in/out around 0.5 liters per breath.
             
@@ -152,10 +163,15 @@ var OrganParameters = [
             var energy = produceEnergy(5 * deltaTime, this.contents);
 
             var airIntake = 0.5 * deltaTime * Math.sin(this.time * 1.0) * 1.5 - (this.innerContents.total() - 4.0) * 0.01 * energy;
-            if (airIntake > 0) {
-                this.innerContents.current['air'] += airIntake;
-            } else {
-                this.innerContents.take(-airIntake, substanceIs(['co2', 'air']));
+            var airSlot = this.veinSlots[0]; // TODO: Fix the hard-coding here
+            
+            if (airSlot.vein) {
+                if (airIntake > 0) {
+                    this.innerContents.give(airSlot.vein.contents.take(airIntake));
+                } else {
+                    airSlot.vein.contents.give(this.innerContents.take(-airIntake, substanceIs(['co2', 'air'])));
+                    airSlot.vein.contents.give(this.innerContents.take(-airIntake * 0.1)); // slowly eject any unsuitable contents
+                }
             }
             // Oxygenate the blood and remove CO2.
             // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight.
@@ -174,7 +190,15 @@ var OrganParameters = [
     innerContents: {
         'air': 3
     },
-    defaultVeins: []
+    defaultVeins: [
+        {
+            target: 'airhose',
+            sourceMode: 'output',
+            sourceInnerChamber: true,
+            targetInnerChamber: true,
+            contents: { 'air': 0.2 }
+        },
+    ]
 },
 {
     name: 'intestine',
@@ -193,7 +217,7 @@ var OrganParameters = [
         if (this.veins.length > 0) {
             // Assume the digestive system uses 5 watts
             var energy = produceEnergy(5 * deltaTime, this.contents);
-            passThroughBlood(this.veins, this.contents);
+            passThroughBlood(this.veinSlots, this.contents);
             /*var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
             for (var i = 0; i < this.veins.length; ++i) {
@@ -209,6 +233,29 @@ var OrganParameters = [
     },
     innerContents: {
         'nutrients': 6
+    },
+    defaultVeins: []
+},
+{
+    name: 'airhose',
+    collisionDef: [
+        'xO'
+    ],
+    image_src: 'test.png',
+    gridSize: {width: 1, height: 0},
+    updateMetabolism: function(deltaTime) {
+        if (this.veins.length > 0) {
+            var veinPressure = this.veins[0].contents.getPressure();
+            if (veinPressure > 1.0) {
+                this.veins[0].contents.take(deltaTime * (veinPressure - 1.0));
+            }
+            var pressureMod = 2.0 - Math.max(veinPressure - 1.0, 1.0);
+            this.veins[0].contents.give({'air': deltaTime * pressureMod});
+        }
+    },
+    contents: {},
+    innerContents: {
+        'air': 100
     },
     defaultVeins: []
 }
@@ -375,8 +422,11 @@ var SquishyCreature = function(options) {
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.name = 'vein';
             vein.renderer = SquishyCreature.veinRenderer;
-            organ.freeVeinSlot(veinParams.mode).attachVein(vein, 0);
-            organ2.freeVeinSlot().attachVein(vein, vein.mesh.positions.length - 1);
+            if (veinParams.contents) {
+                vein.contents = new OrganContents(veinParams.contents);
+            }
+            organ.freeVeinSlot(veinParams.sourceMode).attachVein(vein, 0);
+            organ2.freeVeinSlot(undefined, veinParams.targetInnerChamber).attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
         }
     }
@@ -388,6 +438,7 @@ var VeinSlot = function(options) {
         physics: null,
         organ: null,
         isInput: false,
+        isInnerChamber: false,
         vein: null
     };
     objectUtil.initWithDefaults(this, defaults, options);
@@ -437,7 +488,14 @@ var Organ = function(options) {
     for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
         var index = this.mesh.veinIndices[i];
         var isInput = index.type == 'i' || index.type == 'I';
-        this.veinSlots.push(new VeinSlot({gridPosIndex: index.index, organ: this, physics: this.physics, isInput: isInput}));
+        var isInnerChamber = index.type == 'I' || index.type == 'O';
+        this.veinSlots.push(new VeinSlot({
+            gridPosIndex: index.index,
+            organ: this,
+            physics: this.physics,
+            isInput: isInput,
+            isInnerChamber: isInnerChamber
+        }));
     }
     this.time = 0;
 };
@@ -456,13 +514,16 @@ Organ.prototype.update = function(deltaTime) {
     }
 };
 
-Organ.prototype.freeVeinSlot = function(mode) {
+Organ.prototype.freeVeinSlot = function(mode, inInnerChamber) {
     var needsToBeInput = false;
     if (mode !== undefined && mode === 'input') {
         needsToBeInput = true;
     }
     for (var i = 0; i < this.veinSlots.length; ++i) {
-        if (this.veinSlots[i].vein === null && this.veinSlots[i].isInput === needsToBeInput) {
+        if (this.veinSlots[i].vein === null && 
+            this.veinSlots[i].isInput === needsToBeInput &&
+            (inInnerChamber === undefined || this.veinSlots[i].isInnerChamber === inInnerChamber))
+        {
             return this.veinSlots[i];
         }
     }
