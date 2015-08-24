@@ -257,6 +257,7 @@ var OrganParameters = [
     innerContents: {
         'air': 100
     },
+    innerContentsName: 'airhose',
     defaultVeins: [],
     affix: [
         {point: 0, pos: {x: 450, y: 0}},
