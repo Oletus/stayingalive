@@ -257,7 +257,10 @@ var OrganParameters = [
     innerContents: {
         'air': 100
     },
-    defaultVeins: []
+    defaultVeins: [],
+    affix: [
+        {point: 0, pos: {x: 500, y: 0}},
+    ]
 }
 ];
 
@@ -397,6 +400,12 @@ var SquishyCreature = function(options) {
             collisionGroup: 0,
             collisionDef: OrganParameters[i].collisionDef,
         });
+        var affix = OrganParameters[i].affix ? OrganParameters[i].affix : [];
+        for (var k = 0; k < affix.length; ++k) {
+            var point = affix[k].point;
+            var pos = affix[k].pos;
+            this.physics.affixPoint(organMesh.positions[point], pos);
+        }
         var organ = new Organ({mesh: organMesh, physics: this.physics});
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
