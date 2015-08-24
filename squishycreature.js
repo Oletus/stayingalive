@@ -91,8 +91,8 @@ var OrganParameters = [
                 this.innerContents.take(-airIntake, substanceIs(['co2', 'air']));
             }
             // Oxygenate the blood and remove CO2.
-            // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight. 0.1 is the efficiency factor.
-            var oxygenation = this.innerContents.current['air'] * 0.001225 * 0.23 * 0.1 * deltaTime;
+            // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight. Also adjust by amount of blood to oxygenate.
+            var oxygenation = this.innerContents.current['air'] * 0.001225 * 0.23 * this.contents.current['blood'] * deltaTime;
             this.contents.give({'oxygen': oxygenation});
             this.innerContents.give(this.contents.take(oxygenation, substanceIs('co2')));
         }
