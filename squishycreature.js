@@ -252,13 +252,11 @@ var SquishyCreature = function(options) {
                 initScale: 25
             });
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
+            vein.name = 'vein';
             vein.renderer = SquishyCreature.veinRenderer;
             organ.freeVeinSlot(veinParams.mode).attachVein(vein, 0);
             organ2.freeVeinSlot().attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
-
-            organ.veins.push(vein);
-            organ2.veins.push(vein);
         }
     }
 };
@@ -277,11 +275,13 @@ var VeinSlot = function(options) {
 VeinSlot.prototype.attachVein = function(vein, veinPosIndex) {
     this.vein = vein;
     this.physics.attachPoints(vein.mesh.positions[veinPosIndex], this.organ.mesh.positions[this.gridPosIndex]);
+    this.organ.veins.push(this.vein);
 };
 
 VeinSlot.prototype.detachVein = function() {
-    this.vein = null;
+    arrayUtil.remove(this.organ.veins, this.vein);
     this.physics.detachPoint(this.organ.mesh.positions[this.gridPosIndex]);
+    this.vein = null;
 };
 
 VeinSlot.prototype.getStress = function() {
@@ -410,6 +410,28 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
     }
 
     ctx.restore();
+};
+
+SquishyCreature.prototype.getNearestVeinEnding = function(vec, closestDistance) {
+    var nearest = null;
+    for (var i = 0; i < this.organs.length; ++i) {
+        var vein = this.organs[i];
+        if (vein.name === 'vein') {
+            var pos = vein.mesh.positions[0];
+            var dist = vec.distance(pos);
+            if (dist < closestDistance) {
+                closestDistance = dist;
+                nearest = {vein: vein, posIndex: 0};
+            }
+            var pos = vein.mesh.positions[vein.mesh.positions.length - 1];
+            var dist = vec.distance(pos);
+            if (dist < closestDistance) {
+                closestDistance = dist;
+                nearest = {vein: vein, posIndex: vein.mesh.positions.length - 1};
+            }
+        }
+    }
+    return nearest;
 };
 
 SquishyCreature.prototype.update = function(deltaTime) {

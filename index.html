@@ -62,16 +62,21 @@ var Game = function(resizer, physics) {
     this.draggedParticle = null;
     this.canvasUI.down = function(vec) {
         if (that.draggedParticle != null) {
-            that.draggedParticle.externalForce = new CVec(0, 0);
+            that.setDraggedParticleForce(new CVec(0, 0));
         }
         CanvasUI.prototype.down.apply(that.canvasUI, arguments);
+        var veinInfo = that.squishyCreature.getNearestVeinEnding(vec, 60);
         var part = that.physics.getNearestParticle(vec, 60);
-        that.draggedParticle = part;
+        if (veinInfo) {
+            that.draggedParticle = veinInfo;
+        } else {
+            that.draggedParticle = part;
+        }
     };
     this.canvasUI.release = function() {
         CanvasUI.prototype.release.apply(that.canvasUI, arguments);
         if (that.draggedParticle != null) {
-            that.draggedParticle.externalForce = new CVec(0, 0);
+            that.setDraggedParticleForce(new CVec(0, 0));
             that.draggedParticle = null;
         }
     };
@@ -147,13 +152,32 @@ Game.prototype.getWorldPosition = function(event) {
     return glNormPos;
 };
 
+Game.prototype.getDraggedParticleAsParticle = function() {
+    var part = null;
+    if (this.draggedParticle != null) {
+        if (this.draggedParticle instanceof Particle) {
+            part = this.draggedParticle;
+        } else {
+            part = this.draggedParticle.vein.mesh.positions[this.draggedParticle.posIndex].particle;
+        }
+    }
+    return part;
+};
+
+Game.prototype.setDraggedParticleForce = function(forceVec) {
+    var part = this.getDraggedParticleAsParticle();
+    if (part != null) {
+        part.externalForce = forceVec;
+    }
+};
+
 Game.prototype.update = function(deltaTime) {
     this.time += deltaTime;
     
     if (this.draggedParticle != null) {
         var part = this.draggedParticle;
         var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
-        part.externalForce = cursor.sub(part.state.position).imul(90);
+        this.setDraggedParticleForce(cursor.sub(this.getDraggedParticleAsParticle().state.position).imul(90));
     }
     this.squishyCreature.update(deltaTime);
 };
