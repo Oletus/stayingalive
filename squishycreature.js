@@ -36,19 +36,27 @@ var produceEnergy = function(energyRequested, contents) {
     return availability;
 };
 
-var passThroughBlood = function(veins, contents) {
+var passThroughBlood = function(veinSlots, contents) {
     var totalVeinContents = 0;
-    for (var i = 0; i < veins.length; ++i) {
-        totalVeinContents += veins[i].contents.total();
+    var totalVeins = 0;
+    for (var i = 0; i < veinSlots.length; ++i) {
+        var vein = veinSlots[i].vein;
+        if (!veinSlots[i].isInnerChamber && vein !== null) {
+            totalVeinContents += vein.contents.total();
+            ++totalVeins;
+        }
     }
     // Distribute things evenly among veins but only if there's a large enough pressure difference.
-    var evenContents = totalVeinContents / veins.length;
-    for (var i = 0; i < veins.length; ++i) {
-        var extraInVein = veins[i].contents.total() - evenContents;
-        if (extraInVein > 0.02) {
-            contents.give(veins[i].contents.take((extraInVein - 0.02) * 0.2));
-        } else if (extraInVein < -0.02) {
-            veins[i].contents.give(contents.take((-extraInVein - 0.02) * 0.2));
+    var evenContents = totalVeinContents / totalVeins;
+    for (var i = 0; i < veinSlots.length; ++i) {
+        var vein = veinSlots[i].vein;
+        if (!veinSlots[i].isInnerChamber && vein !== null) {
+            var extraInVein = vein.contents.total() - evenContents;
+            if (extraInVein > 0.02) {
+                contents.give(vein.contents.take((extraInVein - 0.02) * 0.2));
+            } else if (extraInVein < -0.02) {
+                vein.contents.give(contents.take((-extraInVein - 0.02) * 0.2));
+            }
         }
     }
 };
@@ -147,7 +155,7 @@ var OrganParameters = [
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
-            passThroughBlood(this.veins, this.contents);
+            passThroughBlood(this.veinSlots, this.contents);
             // Max capacity of lungs is around 6 liters air.
             // A person breathes in/out around 0.5 liters per breath.
             
@@ -204,7 +212,7 @@ var OrganParameters = [
         if (this.veins.length > 0) {
             // Assume the digestive system uses 5 watts
             var energy = produceEnergy(5 * deltaTime, this.contents);
-            passThroughBlood(this.veins, this.contents);
+            passThroughBlood(this.veinSlots, this.contents);
             /*var maxBloodPerTick = 0.025 * deltaTime;
             var totalBlood = 0;
             for (var i = 0; i < this.veins.length; ++i) {
