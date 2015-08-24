@@ -30,23 +30,34 @@ var OrganParameters = [
             // Real life: the heart passes around 0.070 liters per heartbeat
             // It typically contains 0.100 liters to 0.250 liters of blood.
             // Take in less blood if the heart already contains a lot.
-            var bloodIntake = 0.07 * deltaTime * Math.sin(this.time * 3.0) * 1.5 - (this.contents.total() - 0.18) * 0.02;
-            for (var i = 0; i < this.veinSlots.length; ++i) {
-                var slot = this.veinSlots[i];
-                if (slot.vein !== null) {
-                    if (bloodIntake > 0 && slot.isInput) {
-                        this.contents.give(slot.vein.contents.take(bloodIntake));
-                    } else if (bloodIntake < 0 && !slot.isInput) {
-                        slot.vein.contents.give(this.contents.take(-bloodIntake));
+            // contents and innerContents correspond to the different chambers of the heart.
+            var that = this;
+            var handleChamber = function(contents, iFilter) {
+                var bloodIntake = 0.035 * deltaTime * Math.sin(that.time * 3.0) * 1.5 - (contents.total() - 0.09) * 0.02;
+                for (var i = 0; i < that.veinSlots.length; ++i) {
+                    if (iFilter(i)) {
+                        var slot = that.veinSlots[i];
+                        if (slot.vein !== null) {
+                            if (bloodIntake > 0 && slot.isInput) {
+                                contents.give(slot.vein.contents.take(bloodIntake));
+                            } else if (bloodIntake < 0 && !slot.isInput) {
+                                slot.vein.contents.give(contents.take(-bloodIntake));
+                            }
+                        }
                     }
                 }
-            }
+            };
+            
+            var ch1Filter = function(i) {return i % 2 == 0};
+            handleChamber(this.contents, ch1Filter);
+            handleChamber(this.innerContents, function(i) {return !ch1Filter(i);});
         }
     },
     contents: {
-        'blood': 0.15
+        'blood': 0.09
     },
     innerContents: {
+        'blood': 0.09
     },
     defaultVeins: [
         {
