@@ -59,7 +59,7 @@ var Game = function(resizer, physics) {
     this.time = 0;
     
     this.background = new Sprite('background.jpg', Sprite.loadAsGLTexture(gl));
-    this.squishyCreature = new SquishyCreature({gl: gl, physics: physics});
+    this.initCreature();
     
     this.draggedParticle = null;
     this.canvasUI.down = function(vec) {
@@ -99,6 +99,12 @@ var Game = function(resizer, physics) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     
     this.hasAttached = false;
+};
+
+Game.prototype.initCreature = function() {
+    this.physics = new GamePhysics();
+    this.squishyCreature = new SquishyCreature({gl: this.gl, physics: this.physics});
+    this.draggedParticle = null;
 };
 
 var drawText = function(ctx, str, x, y, flipped) {
@@ -260,6 +266,7 @@ Game.prototype.attachVeinIfPossible = function(veinInfo) {
 Game.prototype.update = function(deltaTime) {
     this.time += deltaTime;
     
+    this.physics.update(deltaTime);
     if (this.draggedParticle != null) {
         var cursor = new CVec(this.canvasUI.cursorX, this.canvasUI.cursorY);
         var dist = this.getDraggedParticleAsParticle().state.position.distance(cursor);
@@ -281,10 +288,9 @@ var start = function() {
     //if (!DEV_MODE) dat.GUI.toggleHide();
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
-    var physics = new GamePhysics(resizer);
-    game = new Game(resizer, physics);
+    game = new Game(resizer);
     initGUI();
-    startMainLoop([resizer, game, physics], {debugMode: DEBUG_MAIN_LOOP});
+    startMainLoop([resizer, game], {debugMode: DEBUG_MAIN_LOOP});
     Game.music.playSingular(true);
 };
 
@@ -297,6 +303,8 @@ var initGUI = function() {
     f1.add(SquishyCreature.debug, 'Show organs');
     
     datinst.add({'Scramble veins':function() { game.squishyCreature.scrambleVeins(); }}, 'Scramble veins');
+    
+    datinst.add({'Reset':function() { game.initCreature(); }}, 'Reset');
     
     GamePhysics.debug.springs = {};
     GamePhysics.debug.particles = {};

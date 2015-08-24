@@ -222,10 +222,6 @@ var integrate = function(particle, state, dt) {
  * An updater to handle the physics loop and state changes
  */
 var GamePhysics = function(resizer) {
-    this.canvas = resizer.getCanvas();
-    this.gl = this.canvas.getContext('webgl');
-    Sprite.gl = this.gl;
-
     this.particles = [];
     this.springs = [];
 
@@ -234,18 +230,6 @@ var GamePhysics = function(resizer) {
         radius: 425,
         state: new State(),
     };
-};
-
-GamePhysics.prototype.render = function(ctx) {
-    // CanvasResizer passes a wrapped 2D context to use here when run in FIXED_COORDINATE_SYSTEM mode,
-    // where ctx.canvas.width/height are set to the coordinate system width/height.
-    // Otherwise the context initialized here is used.
-    if (ctx === undefined) {
-        ctx = this.gl;
-    }
-    var gl = ctx;
-
-    return ctx;
 };
 
 GamePhysics.prototype.update = function(deltaTime) {
