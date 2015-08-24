@@ -222,6 +222,13 @@ var OrganContents = function(options) {
         'co2': 0.0, // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
         'nutrients': 0.0 // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
     };
+    this.units = {
+        'blood': 'l',
+        'air': 'l',
+        'oxygen': 'kg',
+        'co2': 'kg',
+        'nutrients': 'kg'
+    };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
     // blood starts out oxygenated
@@ -292,7 +299,25 @@ OrganContents.prototype.total = function(filterFunc) {
 };
 
 OrganContents.prototype.prettyPrint = function(key) {
-    return key + ': ' + this.current[key].toFixed(5);
+    var unit = this.units[key];
+    var val = this.current[key];
+    if (val < 0.0005) {
+        val *= 1000000;
+        if (unit == 'kg') {
+            unit = 'mg';
+        } else {
+            unit = 'µ' + unit;
+        }
+    }
+    else if (val < 0.5) {
+        val *= 1000;
+        if (unit == 'kg') {
+            unit = 'g';
+        } else {
+            unit = 'm' + unit;
+        }
+    }
+    return key + ': ' + val.toFixed(1) + ' ' + unit;
 };
 
 var SquishyCreature = function(options) {
