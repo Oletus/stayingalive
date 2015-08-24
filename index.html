@@ -116,12 +116,24 @@ Game.prototype.render = function(ctx) {
     };
     
     this.squishyCreature.render(this.getWorldTransform(ctx.canvas));
-    
-    if (DEV_MODE) {
-        this.ctx2D.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
-        this.ctx2D.fillStyle = '#fff';
-        this.squishyCreature.renderDebug(this.ctx2D, this.physics, this.getWorldTransform(ctx.canvas));
-    }
+
+    // Render HUD stuff
+    var worldTransform = this.getWorldTransform(this.ctx2D.canvas);
+    this.ctx2D.save();
+    this.ctx2D.clearRect(0, 0, this.canvas2D.width, this.canvas2D.height);
+    this.ctx2D.fillStyle = '#fff';
+    var transX = this.ctx2D.canvas.width * 0.5;
+    var transY = this.ctx2D.canvas.height * 0.5;
+    this.ctx2D.translate(transX, transY);
+    var scaleX = worldTransform[0] * this.ctx2D.canvas.width * 0.5;
+    var scaleY = worldTransform[5] * this.ctx2D.canvas.height * 0.5;
+    this.ctx2D.scale(scaleX, -scaleY);
+
+    //TODO: It'd be nice to just have a list of things to loop through, here
+    this.squishyCreature.renderHUD(this.ctx2D);
+    this.physics.renderHUD(this.ctx2D);
+
+    this.ctx2D.restore();
     
     gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas2D);

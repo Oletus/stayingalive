@@ -453,51 +453,42 @@ SquishyCreature.prototype.render = function(worldTransform) {
     }
 };
 
-SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
-    ctx.save();
-    var transX = ctx.canvas.width * 0.5;
-    var transY = ctx.canvas.height * 0.5;
-    ctx.translate(transX, transY);
-    var scaleX = worldTransform[0] * ctx.canvas.width * 0.5;
-    var scaleY = worldTransform[5] * ctx.canvas.height * 0.5;
-    ctx.scale(scaleX, -scaleY);
-
-    physics.renderDebug(ctx);
+SquishyCreature.prototype.renderHUD = function(ctx2d) {
+    ctx2d.save();
 
     for (var i = 0; i < this.organs.length; ++i) {
-        physics.renderDebugGrid(ctx, this.organs[i].mesh);
         var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
         var pos = this.organs[i].mesh.positions[posIndex];
-        
-        ctx.font = 'bold 15px sans-serif';
+
+        ctx2d.font = 'bold 15px sans-serif';
         var currentContents = this.organs[i].contents.current;
         for (var key in currentContents) {
             if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
-                ctx.save();
-                ctx.translate(pos.x, pos.y);
-                ctx.scale(1, -1);
-                ctx.fillStyle = '#f00';
-                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx2d.save();
+                ctx2d.translate(pos.x, pos.y);
+                ctx2d.scale(1, -1);
+                ctx2d.fillStyle = '#f00';
+                ctx2d.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
                 pos.y += 20;
-                ctx.restore();
+                ctx2d.restore();
             }
         }
 
         var currentContents = this.organs[i].innerContents.current;
         for (var key in currentContents) {
             if (currentContents.hasOwnProperty(key) && currentContents[key] != 0) {
-                ctx.save();
-                ctx.translate(pos.x, pos.y);
-                ctx.scale(1, -1);
-                ctx.fillStyle = '#fff';
-                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx2d.save();
+                ctx2d.translate(pos.x, pos.y);
+                ctx2d.scale(1, -1);
+                ctx2d.fillStyle = '#fff';
+                ctx2d.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
                 pos.y += 20;
-                ctx.restore();
+                ctx2d.restore();
             }
         }
     }
 
-    ctx.restore();
+    ctx2d.restore();
 };
 
 SquishyCreature.prototype.getNearestVeinEnding = function(vec, closestDistance) {

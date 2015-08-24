@@ -353,7 +353,8 @@ GamePhysics.prototype.update = function(deltaTime) {
     }
 };
 
-GamePhysics.prototype.renderDebug = function(ctx) {
+GamePhysics.prototype.renderHUD = function(ctx) {
+    ctx.save();
     if (this.playarea != null) {
         var pos = this.playarea.center;
         var radius = this.playarea.radius;
@@ -388,8 +389,7 @@ GamePhysics.prototype.renderDebug = function(ctx) {
             ctx.stroke();
         }
     }
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#000';
+    ctx.restore();
 };
 
 GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
