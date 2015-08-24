@@ -59,8 +59,8 @@ var OrganParameters = [
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
     collisionDef: [
-        'oo ',
-        'iix',
+        'oO ',
+        'iIx',
         'xxx',
     ],
     updateMetabolism: function(deltaTime) {
@@ -424,10 +424,9 @@ var Organ = function(options) {
     this.veins = [];
     this.veinSlots = [];
     for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
-        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.veinIndices[i], organ: this, physics: this.physics}));
-    }
-    for (var i = 0; i < this.mesh.inputVeinIndices.length; ++i) {
-        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.inputVeinIndices[i], organ: this, physics: this.physics, isInput: true}));
+        var index = this.mesh.veinIndices[i];
+        var isInput = index.type == 'i' || index.type == 'I';
+        this.veinSlots.push(new VeinSlot({gridPosIndex: index.index, organ: this, physics: this.physics, isInput: isInput}));
     }
     this.time = 0;
 };
