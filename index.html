@@ -10,7 +10,7 @@
 <script src="audio.js"></script>
 <script src="canvasresizer.js"></script>
 <script src="loadingbar.js"></script>
-<script src="particle.js"></script>
+<!--<script src="particle.js"></script>-->
 <script src="canvasui.js"></script>
 <!-- input -->
 <script src="lib/mousetrap.js"></script>
@@ -76,6 +76,9 @@ var Game = function(resizer, physics) {
     this.canvasUI.release = function() {
         CanvasUI.prototype.release.apply(that.canvasUI, arguments);
         if (that.draggedParticle != null) {
+            if (!(that.draggedParticle instanceof Particle)) {
+                that.attachVeinIfPossible(that.draggedParticle);
+            }
             that.setDraggedParticleForce(new CVec(0, 0));
             that.draggedParticle = null;
         }
@@ -168,6 +171,14 @@ Game.prototype.setDraggedParticleForce = function(forceVec) {
     var part = this.getDraggedParticleAsParticle();
     if (part != null) {
         part.externalForce = forceVec;
+    }
+};
+
+Game.prototype.attachVeinIfPossible = function(veinInfo) {
+    var pos = this.getDraggedParticleAsParticle().state.position;
+    var slot = this.squishyCreature.getNearestFreeVeinSlot(pos, 60);
+    if (slot) {
+        slot.attachVein(veinInfo.vein, veinInfo.posIndex);
     }
 };
 

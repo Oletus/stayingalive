@@ -273,6 +273,9 @@ var VeinSlot = function(options) {
 };
 
 VeinSlot.prototype.attachVein = function(vein, veinPosIndex) {
+    if (this.vein) {
+        this.detachVein();
+    }
     this.vein = vein;
     this.physics.attachPoints(vein.mesh.positions[veinPosIndex], this.organ.mesh.positions[this.gridPosIndex]);
     this.organ.veins.push(this.vein);
@@ -282,6 +285,10 @@ VeinSlot.prototype.detachVein = function() {
     arrayUtil.remove(this.organ.veins, this.vein);
     this.physics.detachPoint(this.organ.mesh.positions[this.gridPosIndex]);
     this.vein = null;
+};
+
+VeinSlot.prototype.getPosition = function() {
+    return this.organ.mesh.positions[this.gridPosIndex].particle.state.position;
 };
 
 VeinSlot.prototype.getStress = function() {
@@ -428,6 +435,25 @@ SquishyCreature.prototype.getNearestVeinEnding = function(vec, closestDistance) 
             if (dist < closestDistance) {
                 closestDistance = dist;
                 nearest = {vein: vein, posIndex: vein.mesh.positions.length - 1};
+            }
+        }
+    }
+    return nearest;
+};
+
+SquishyCreature.prototype.getNearestFreeVeinSlot = function(vec, closestDistance) {
+    var nearest = null;
+    for (var i = 0; i < this.organs.length; ++i) {
+        var organ = this.organs[i];
+        for (var j = 0; j < organ.veinSlots.length; ++j) {
+            var veinSlot = organ.veinSlots[j];
+            if (veinSlot.vein == null) {
+                var pos = veinSlot.getPosition();
+                var dist = vec.distance(pos);
+                if (dist < closestDistance) {
+                    closestDistance = dist;
+                    nearest = veinSlot;
+                }
             }
         }
     }
