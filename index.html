@@ -272,6 +272,8 @@ var DEV_MODE = (window.location.href.indexOf("?devMode") != -1);
 
 Game.music = new Audio('alive_labsounds');
 
+var game;
+
 var start = function() {
     var DEBUG_MAIN_LOOP = DEV_MODE && true; // Set to true to allow fast-forwarding main loop with 'f'
     Audio.muteAll(DEV_MODE && false); // Set to true if sounds annoy developers
@@ -280,9 +282,38 @@ var start = function() {
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
     var physics = new GamePhysics(resizer);
-    var game = new Game(resizer, physics);
+    game = new Game(resizer, physics);
+    initGUI();
     startMainLoop([resizer, game, physics], {debugMode: DEBUG_MAIN_LOOP});
     Game.music.playSingular(true);
+};
+
+var initGUI = function() {
+    SquishyCreature.debug['Show veins'] = false;
+    SquishyCreature.debug['Show organs'] = true;
+    var datinst = dat.instance;
+    var f1 = datinst.addFolder('Organs');
+    f1.add(SquishyCreature.debug, 'Show veins');
+    f1.add(SquishyCreature.debug, 'Show organs');
+    
+    datinst.add({'Scramble veins':function() { game.squishyCreature.scrambleVeins(); }}, 'Scramble veins');
+    
+    GamePhysics.debug.springs = {};
+    GamePhysics.debug.particles = {};
+    GamePhysics.debug.springs.show = false;
+    GamePhysics.debug.springs.color = '#0f0';
+    GamePhysics.debug.particles.show = false;
+    if (DEV_MODE) {
+        GamePhysics.debug.particles.show = true;
+
+        var datinst = dat.instance;
+        var gui = datinst.addFolder('Physics');
+        var f1 = gui.addFolder('Springs');
+        f1.add(GamePhysics.debug.springs, 'show');
+        f1.addColor(GamePhysics.debug.springs, 'color');
+        var f2 = gui.addFolder('Particles');
+        f2.add(GamePhysics.debug.particles, 'show');
+    }
 };
 </script>
 </head>

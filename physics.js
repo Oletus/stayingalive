@@ -233,25 +233,7 @@ var GamePhysics = function(resizer) {
         center: new CVec(0,0),
         radius: 425,
         state: new State(),
-    }
-
-    this.debug = {};
-    this.debug.springs = {};
-    this.debug.particles = {};
-    this.debug.springs.show = false;
-    this.debug.springs.color = '#0f0';
-    this.debug.particles.show = false;
-    if (DEV_MODE) {
-        this.debug.particles.show = true;
-
-        var datinst = dat.instance;
-        var gui = datinst.addFolder('Physics');
-        var f1 = gui.addFolder('Springs');
-        f1.add(this.debug.springs, 'show');
-        f1.addColor(this.debug.springs, 'color');
-        var f2 = gui.addFolder('Particles');
-        f2.add(this.debug.particles, 'show');
-    }
+    };
 };
 
 GamePhysics.prototype.render = function(ctx) {
@@ -362,7 +344,7 @@ GamePhysics.prototype.renderHUD = function(ctx) {
         ctx.stroke();
     }
 
-    if (this.debug.particles.show) {
+    if (GamePhysics.debug.particles.show) {
         for (var j = 0; j < this.particles.length; ++j) {
             var particle = this.particles[j];
             var pos = particle.point;
@@ -375,13 +357,13 @@ GamePhysics.prototype.renderHUD = function(ctx) {
         }
     }
 
-    if (this.debug.springs.show) {
+    if (GamePhysics.debug.springs.show) {
         for (var j = 0; j < this.springs.length; ++j) {
             var spring = this.springs[j];
             var pos1 = spring.particle1.point;
             if (spring.particle2 !== null) {
                 var pos2 = spring.particle2.point;
-                ctx.strokeStyle = this.debug.springs.color;
+                ctx.strokeStyle = GamePhysics.debug.springs.color;
                 ctx.beginPath();
                 ctx.moveTo(pos1.x, pos1.y);
                 ctx.lineTo(pos2.x, pos2.y);
@@ -570,3 +552,5 @@ GamePhysics.prototype.createSpring = function(particle, target, diagonal, gridPa
     this.springs.push(spring);
     return spring;
 }
+
+GamePhysics.debug = {};

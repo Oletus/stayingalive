@@ -381,19 +381,6 @@ var SquishyCreature = function(options) {
         physics: null
     };
 
-    this.debug = {};
-    this.debug['Show veins'] = false;
-    this.debug['Show organs'] = true;
-    if (DEV_MODE) {
-    }
-    var datinst = dat.instance;
-    var f1 = datinst.addFolder('Organs');
-    f1.add(this.debug, 'Show veins');
-    f1.add(this.debug, 'Show organs');
-    
-    var that = this;
-    datinst.add({'Scramble veins':function() { that.scrambleVeins(); }}, 'Scramble veins');
-
     this.time = 0.0;
     objectUtil.initWithDefaults(this, defaults, options);
     this.organs = [];
@@ -608,8 +595,8 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
     };
 
     for (var i = 0; i < this.organs.length; ++i) {
-        if (this.organs[i].name !== 'vein'  && !this.debug['Show organs']) continue;
-        if (this.organs[i].name === 'vein'  && !this.debug['Show veins']) continue;
+        if (this.organs[i].name !== 'vein'  && !SquishyCreature.debug['Show organs']) continue;
+        if (this.organs[i].name === 'vein'  && !SquishyCreature.debug['Show veins']) continue;
         var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
         var pos = this.organs[i].mesh.positions[posIndex];
 
@@ -708,3 +695,5 @@ SquishyCreature.prototype.scrambleVeins = function() {
         }
     }
 };
+
+SquishyCreature.debug = {};
