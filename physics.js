@@ -149,11 +149,31 @@ Spring.prototype.maxDistance = function() {
     return this.maxdistance * this.gridParameters.pulseModifier;
 };
 
+var getExternalForce = function(particle, state) {
+    if (particle.externalForce > 0) {
+        var diffToExternal = particle.externalForceTarget.sub(state.position);
+        diffToExternal.imul(particle.externalForce);
+        return diffToExternal;
+    }
+    return null;
+};
+
 var acceleration = function(particle, state) {
     //TODO
     var force = new CVec();
     for (var i = 0; i < particle.springs.length; ++i) {
         force.iadd(particle.springs[i].calculate(state));
+        
+        // External force affects connected particles through this hack
+        var part2 = particle.springs[i].particle2;
+        var state2 = part2.state;
+        var part2Dist = state2.position.distance(state.position);
+        if (part2Dist < 150) {
+            var externalForce = getExternalForce(part2, state2);
+            if (externalForce !== null) {
+                force.iadd(externalForce.imul((150 - part2Dist) / 150));
+            }
+        }
     }
     for (var i = 0; i < particle.contacts.length; ++i) {
         force.iadd(particle.contacts[i].calculate(state));
@@ -164,10 +184,9 @@ var acceleration = function(particle, state) {
     particle.contacts.length = 0;
     force.iadd(new CVec((Math.random()-.5)*400, (Math.random()-.5)*400));
     
-    if (particle.externalForce > 0) {
-        var diffToExternal = particle.externalForceTarget.sub(state.position);
-        diffToExternal.imul(particle.externalForce);
-        force.iadd(diffToExternal);
+    var externalForce = getExternalForce(particle, state);
+    if (externalForce !== null) {
+        force.iadd(externalForce);
     }
     return force;
 }
