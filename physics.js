@@ -319,16 +319,16 @@ GamePhysics.prototype.update = function(deltaTime) {
 
 GamePhysics.prototype.renderHUD = function(ctx) {
     ctx.save();
-    if (this.playarea != null) {
-        var pos = this.playarea.center;
-        var radius = this.playarea.radius;
-        ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-        ctx.stroke();
-    }
 
     if (GamePhysics.debug.particles.show) {
+        if (this.playarea != null) {
+            var pos = this.playarea.center;
+            var radius = this.playarea.radius;
+            ctx.fillRect(pos.x - 2, pos.y - 2, 4, 4);
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         for (var j = 0; j < this.particles.length; ++j) {
             var particle = this.particles[j];
             var pos = particle.point;
