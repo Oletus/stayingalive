@@ -239,7 +239,7 @@ var OrganParameters = [
 {
     name: 'airhose',
     collisionDef: [
-        'xO'
+        ' O'
     ],
     image_src: 'test.png',
     gridSize: {width: 1, height: 0},
@@ -259,7 +259,8 @@ var OrganParameters = [
     },
     defaultVeins: [],
     affix: [
-        {point: 0, pos: {x: 500, y: 0}},
+        {point: 0, pos: {x: 550, y: 0}},
+        {point: 1, pos: {x: 480, y: 0}},
     ]
 }
 ];
