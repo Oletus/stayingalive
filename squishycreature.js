@@ -205,10 +205,10 @@ var OrganParameters = [
     collisionDef: [
         '  xxx',
         'xxxxx',
+        'xooxx',
         'xxxxx',
         'xxxxx',
-        'xxxox',
-        'xoxxx',
+        'xxxxx',
         '  x  '
     ],
     image_src: 'o_digestive.png',
