@@ -330,15 +330,15 @@ GamePhysics.prototype.update = function(deltaTime) {
             if (maxDistance <= 0) return;
             var particle = this.springs[k].particle1;
             var particle2 = this.springs[k].particle2;
-            var distanceSq = particle.state.position.distanceSq(particle2.state.position);
+            var targetposition = particle2 ? particle2.state.position : this.springs[k].point;
+            var distanceSq = particle.state.position.distanceSq(targetposition);
             var maxDistanceSq = maxDistance * maxDistance;
             if (distanceSq > maxDistanceSq) {
-                var diff = particle.state.position.sub(particle2.state.position);
+                var diff = particle.state.position.sub(targetposition);
                 var distance = diff.length();
                 diff.idiv(distance);
                 diff.imul(-0.5 * (distance - maxDistance));
                 particle.state.position.iadd(diff.div(particle.inertia));
-                particle2.state.position.isub(diff.div(particle2.inertia));
             }
         }
     }
@@ -406,6 +406,13 @@ GamePhysics.prototype.getNearestParticle = function(worldPos, smallestDistance) 
     }
     return nearestParticle;
 };
+
+GamePhysics.prototype.affixPoint = function(point, pos) {
+    var particle = point.particle;
+    var spring = new Spring(pos, 1000, 0.9, 0, particle, null);
+    spring.maxdistance = 1;
+    this.springs.push(spring);
+}
 
 GamePhysics.prototype.attachPoints = function(point1, point2) {
     var particle1 = point1.particle;
