@@ -291,6 +291,10 @@ OrganContents.prototype.total = function(filterFunc) {
     return total;
 };
 
+OrganContents.prototype.prettyPrint = function(key) {
+    return key + ': ' + this.current[key].toFixed(5);
+};
+
 var SquishyCreature = function(options) {
     var defaults = {
         gl: null,
@@ -477,7 +481,7 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
                 ctx.translate(pos.x, pos.y);
                 ctx.scale(1, -1);
                 ctx.fillStyle = '#f00';
-                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx.fillText(this.organs[i].contents.prettyPrint(key), 0, 0);
                 pos.y += 20;
                 ctx.restore();
             }
@@ -490,7 +494,7 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
                 ctx.translate(pos.x, pos.y);
                 ctx.scale(1, -1);
                 ctx.fillStyle = '#fff';
-                ctx.fillText(key + ': ' + currentContents[key].toFixed(5), 0, 0);
+                ctx.fillText(this.organs[i].innerContents.prettyPrint(key), 0, 0);
                 pos.y += 20;
                 ctx.restore();
             }
