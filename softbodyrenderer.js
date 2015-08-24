@@ -89,7 +89,7 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
                 angle -= Math.PI * 0.25; // normal angle
             }
             var diff = new Vec2(Math.cos(angle), Math.sin(angle));
-            diff.scale(pos.getRadius() * 1.41);
+            diff.scale(pos.getRadius() * 1.6);
         } else {
             var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
             var diff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
