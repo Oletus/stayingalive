@@ -30,7 +30,7 @@ var OrganParameters = [
             // Real life: the heart passes around 0.070 liters per heartbeat
             // It typically contains 0.100 liters to 0.250 liters of blood.
             // Take in less blood if the heart already contains a lot.
-            var bloodIntake = 0.07 * deltaTime * Math.sin(this.time * 3.0) * 1.5 - (this.contents.total() - 0.18) * 0.01;
+            var bloodIntake = 0.07 * deltaTime * Math.sin(this.time * 3.0) * 1.5 - (this.contents.total() - 0.18) * 0.02;
             for (var i = 0; i < this.veinSlots.length; ++i) {
                 var slot = this.veinSlots[i];
                 if (slot.vein !== null) {
