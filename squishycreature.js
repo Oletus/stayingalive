@@ -205,7 +205,7 @@ var SquishyCreature = function(options) {
     
     // Initialize organs
     for (var i = 0; i < OrganParameters.length; ++i) {
-        var organ = this.physics.generateMesh({
+        var organMesh = this.physics.generateMesh({
             x: 0,
             y: i * 200 - 200, 
             width: OrganParameters[i].gridSize.width,
@@ -213,7 +213,7 @@ var SquishyCreature = function(options) {
             collisionGroup: 0,
             collisionDef: OrganParameters[i].collisionDef,
         });
-        SquishyCreature.initOrgan(organ, this.physics);
+        var organ = new Organ({mesh: organMesh, physics: this.physics});
         organ.renderer = OrganParameters[i].renderer;
         organ.name = OrganParameters[i].name;
         organ.updateMetabolism = OrganParameters[i].updateMetabolism;
@@ -225,23 +225,21 @@ var SquishyCreature = function(options) {
     for (var i = 0; i < OrganParameters.length; ++i) {
         var organ = this.organs[i];
         for (var j = 0; j < OrganParameters[i].defaultVeins.length; ++j) {
-            var vein = OrganParameters[i].defaultVeins[j];
-            var x = organ.positions[0].x;
-            var y = organ.positions[0].y;
-            var organ2 = this.findOrganByName(vein.target);
-            var vein = this.physics.generateMesh({
-                x: organ.positions[j].x,
-                y: organ.positions[j].y,
+            var veinParams = OrganParameters[i].defaultVeins[j];
+            var organ2 = this.findOrganByName(veinParams.target);
+            var veinMesh = this.physics.generateMesh({
+                x: organ.mesh.positions[0].x,
+                y: organ.mesh.positions[0].y,
                 width: 15,
                 height: 0,
                 collisionGroup: 1,
                 initScale: 25
             });
-            SquishyCreature.initOrgan(vein, this.physics);
+            var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.renderer = SquishyCreature.veinRenderer;
             // TODO: Attach vein to organs with springs/constraints
             organ.freeVeinSlot().attachVein(vein, 0);
-            organ2.freeVeinSlot().attachVein(vein, vein.positions.length - 1);
+            organ2.freeVeinSlot().attachVein(vein, vein.mesh.positions.length - 1);
             this.organs.push(vein);
 
             organ.veins.push(vein);
@@ -262,28 +260,38 @@ var VeinSlot = function(options) {
 
 VeinSlot.prototype.attachVein = function(vein, veinPosIndex) {
     this.vein = vein;
-    this.physics.attachPoints(vein.positions[veinPosIndex], this.organ.positions[this.gridPosIndex]);
+    this.physics.attachPoints(vein.mesh.positions[veinPosIndex], this.organ.mesh.positions[this.gridPosIndex]);
 };
 
-SquishyCreature.initOrgan = function(organ, physics) {
-    organ.name = '';
-    organ.contents = new OrganContents({'blood':0.1}); // Contents that are available to blood circulation
-    organ.innerContents = new OrganContents({}); // Contents like air in lungs, food in digestion.
-    organ.veins = [];
-    organ.veinSlots = [];
-    for (var i = 0; i < organ.veinIndices.length; ++i) {
-        organ.veinSlots.push(new VeinSlot({gridPosIndex: organ.veinIndices[i], organ: organ, physics: physics}));
-    }
-    organ.updateMetabolism = function() {};
-    organ.time = 0;
-    organ.freeVeinSlot = function() {
-        for (var i = 0; i < this.veinSlots.length; ++i) {
-            if (this.veinSlots[i].vein === null) {
-                return this.veinSlots[i];
-            }
-        }
-        return null;
+/**
+ * @constructor
+ */
+var Organ = function(options) {
+    var defaults = {
+        physics: null,
+        mesh: null
     };
+    objectUtil.initWithDefaults(this, defaults, options);
+    this.name = '';
+    this.contents = new OrganContents({'blood':0.1}); // Contents that are available to blood circulation
+    this.innerContents = new OrganContents({}); // Contents like air in lungs, food in digestion.
+    this.veins = [];
+    this.veinSlots = [];
+    for (var i = 0; i < this.mesh.veinIndices.length; ++i) {
+        this.veinSlots.push(new VeinSlot({gridPosIndex: this.mesh.veinIndices[i], organ: this, physics: this.physics}));
+    }
+    this.time = 0;
+};
+
+Organ.prototype.updateMetabolism = function() {}; // Expected to be set on each object separately
+
+Organ.prototype.freeVeinSlot = function() {
+    for (var i = 0; i < this.veinSlots.length; ++i) {
+        if (this.veinSlots[i].vein === null) {
+            return this.veinSlots[i];
+        }
+    }
+    return null;
 };
 
 SquishyCreature.initRenderers = function(gl) {
@@ -305,7 +313,7 @@ SquishyCreature.prototype.findOrganByName = function(name) {
 
 SquishyCreature.prototype.render = function(worldTransform) {
     for (var i = 0; i < this.organs.length; ++i) {
-        this.organs[i].renderer.render(this.organs[i], worldTransform);
+        this.organs[i].renderer.render(this.organs[i].mesh, worldTransform);
     }
 };
 
@@ -321,9 +329,9 @@ SquishyCreature.prototype.renderDebug = function(ctx, physics, worldTransform) {
     physics.renderDebug(ctx);
 
     for (var i = 0; i < this.organs.length; ++i) {
-        physics.renderDebugGrid(ctx, this.organs[i]);
-        var posIndex = Math.floor(this.organs[i].positions.length * 0.5);
-        var pos = this.organs[i].positions[posIndex];
+        physics.renderDebugGrid(ctx, this.organs[i].mesh);
+        var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
+        var pos = this.organs[i].mesh.positions[posIndex];
         
         ctx.font = 'bold 15px sans-serif';
         var currentContents = this.organs[i].contents.current;
@@ -366,7 +374,7 @@ SquishyCreature.prototype.update = function(deltaTime) {
             fillMult = (this.organs[i].innerContents.total() + this.organs[i].contents.total()) / 
                        (this.organs[i].innerContents.initialTotal + this.organs[i].contents.initialTotal);
         }
-        this.organs[i].parameters.pulseModifier = 0.5 + fillMult * 0.6;
+        this.organs[i].mesh.parameters.pulseModifier = 0.5 + fillMult * 0.6;
         this.organs[i].updateMetabolism(deltaTime);
     }
 };
