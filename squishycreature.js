@@ -283,7 +283,7 @@ var OrganContents = function(options, name) {
         'nutrients': 'kg',
         'hamburgers': 'kg'
     };
-    this.name = name ? name : 'blood';
+    this.name = name ? name : 'vessel';
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
     // blood starts out oxygenated
@@ -528,6 +528,10 @@ Organ.prototype.update = function(deltaTime) {
             slot.detachVein();
         }
     }
+};
+
+Organ.prototype.isAttachedFrom = function(posIndex) {
+    return this.mesh.positions[posIndex].particle.attachment !== null;
 };
 
 Organ.prototype.freeVeinSlot = function(mode, inInnerChamber) {

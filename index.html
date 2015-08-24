@@ -99,6 +99,18 @@ var Game = function(resizer, physics) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 };
 
+var drawText = function(ctx, str, x, y, flipped) {
+    ctx.save();
+    ctx.font = 'bold 15px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#000';
+    ctx.strokeText(str, x, y);
+    ctx.fillText(str, x, y);
+    ctx.restore();
+}
+
 Game.prototype.render = function(ctx) {
     // CanvasResizer passes a wrapped 2D context to use here when run in FIXED_COORDINATE_SYSTEM mode,
     // where ctx.canvas.width/height are set to the coordinate system width/height.
@@ -135,16 +147,17 @@ Game.prototype.render = function(ctx) {
 
     this.ctx2D.restore();
     
-    //
-    this.ctx2D.save();
-    this.ctx2D.font = 'bold 15px monospace';
-    this.ctx2D.textAlign = 'center';
-    this.ctx2D.fillStyle = '#fff';
-    this.ctx2D.lineWidth = 4;
-    this.ctx2D.strokeStyle = '#000';
-    this.ctx2D.strokeText('Staying Alive - Ludum Dare #33 Game by Olli Etuaho, Zachary Laster, Sakari Leppä, Valtteri Heinonen and Anastasia Diatlova', this.ctx2D.canvas.width * 0.5, 700);
-    this.ctx2D.fillText('Staying Alive - Ludum Dare #33 Game by Olli Etuaho, Zachary Laster, Sakari Leppä, Valtteri Heinonen and Anastasia Diatlova', this.ctx2D.canvas.width * 0.5, 700);
-    this.ctx2D.restore();
+    // Credits and info
+    var that = this;
+    drawText(this.ctx2D, 'Staying Alive - Ludum Dare #33 Game by Olli Etuaho, Zachary Laster, Sakari Leppä, Valtteri Heinonen and Anastasia Diatlova', this.ctx2D.canvas.width * 0.5, 700);
+    
+    if (this.draggedParticle != null && !(this.draggedParticle instanceof Particle)) {
+        if (this.isDraggedVeinAttached()) {
+            drawText(this.ctx2D, 'Pull hard to detach vein', this.ctx2D.canvas.width * 0.5, this.ctx2D.canvas.height * 0.5);
+        } else {
+            drawText(this.ctx2D, 'Release vein over a slot to connect', this.ctx2D.canvas.width * 0.5, this.ctx2D.canvas.height * 0.5);
+        }
+    }
     
     gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas2D);
@@ -200,8 +213,20 @@ Game.prototype.setDraggedParticleForce = function(forceTarget, force) {
     }
 };
 
+Game.prototype.isDraggedVeinAttached = function() {
+    if (this.draggedParticle != null && !(this.draggedParticle instanceof Particle)) {
+        if (this.draggedParticle.vein.isAttachedFrom(this.draggedParticle.posIndex)) {
+            return true;
+        }
+    }
+    return false;
+};
+
 Game.prototype.getHilightedSlot = function() {
     if (this.draggedParticle != null && !(this.draggedParticle instanceof Particle)) {
+        if (this.draggedParticle.vein.isAttachedFrom(this.draggedParticle.posIndex)) {
+            return null;
+        }
         var pos = this.getDraggedParticleAsParticle().state.position;
         var slot = this.squishyCreature.getNearestFreeVeinSlot(pos, 60);
         if (slot) {
@@ -212,6 +237,10 @@ Game.prototype.getHilightedSlot = function() {
 };
 
 Game.prototype.attachVeinIfPossible = function(veinInfo) {
+    // Check if already attached
+    if (veinInfo.vein.isAttachedFrom(veinInfo.posIndex)) {
+        return;
+    }
     var pos = this.getDraggedParticleAsParticle().state.position;
     var slot = this.squishyCreature.getNearestFreeVeinSlot(pos, 60);
     if (slot) {
