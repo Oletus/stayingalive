@@ -135,6 +135,17 @@ Game.prototype.render = function(ctx) {
 
     this.ctx2D.restore();
     
+    //
+    this.ctx2D.save();
+    this.ctx2D.font = 'bold 15px monospace';
+    this.ctx2D.textAlign = 'center';
+    this.ctx2D.fillStyle = '#fff';
+    this.ctx2D.lineWidth = 4;
+    this.ctx2D.strokeStyle = '#000';
+    this.ctx2D.strokeText('Staying Alive - Ludum Dare #33 Game by Olli Etuaho, Zachary Laster, Sakari Leppä, Valtteri Heinonen and Anastasia Diatlova', this.ctx2D.canvas.width * 0.5, 700);
+    this.ctx2D.fillText('Staying Alive - Ludum Dare #33 Game by Olli Etuaho, Zachary Laster, Sakari Leppä, Valtteri Heinonen and Anastasia Diatlova', this.ctx2D.canvas.width * 0.5, 700);
+    this.ctx2D.restore();
+    
     gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas2D);
     this.glManager.useQuadVertexBuffer(true);
