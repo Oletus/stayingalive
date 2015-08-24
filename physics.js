@@ -396,6 +396,7 @@ GamePhysics.prototype.generateMesh = function(options) {
         height: obj.height,
         positions: [],
         veinIndices: [],
+        inputVeinIndices: [],
         parameters: {
             pulseModifier: 1
         }
@@ -417,6 +418,8 @@ GamePhysics.prototype.generateMesh = function(options) {
                 collides[collisionDef.length - 1 - sy][sx] = (arr[sx] != ' ');
                 if (arr[sx] == 'o') {
                     grid.veinIndices.push(sx * (height + 1) + collisionDef.length - 1 - sy);
+                } else if (arr[sx] == 'i') {
+                    grid.inputVeinIndices.push(sx * (height + 1) + collisionDef.length - 1 - sy);
                 }
             }
         }
