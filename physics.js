@@ -159,9 +159,12 @@ Spring.prototype.maxDistance = function() {
 
 var getExternalForce = function(particle, state) {
     if (particle.externalForce > 0) {
-        var diffToExternal = particle.externalForceTarget.sub(state.position);
-        diffToExternal.imul(particle.externalForce);
-        return diffToExternal;
+        var point = particle.externalForceTarget;
+        var stiffness=100, damping=0.9;
+        //x = pt-s.x
+        var transform = point.sub(state.position);
+        //k * x - s.p*d
+        return transform.mul(stiffness).sub(state.momentum.mul(damping));
     }
     return null;
 };
