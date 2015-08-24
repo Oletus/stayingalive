@@ -547,9 +547,17 @@ SquishyCreature.prototype.findOrganByName = function(name) {
     return null;
 };
 
-SquishyCreature.prototype.render = function(worldTransform) {
+SquishyCreature.prototype.render = function(worldTransform, hilightedSlot) {
     for (var i = 0; i < this.organs.length; ++i) {
-        this.organs[i].renderer.render(this.organs[i].mesh, worldTransform);
+        var hilight = 0;
+        var hilightTexCoord = [0, 0];
+        if (hilightedSlot !== null && hilightedSlot.organ === this.organs[i]) {
+            hilight = 1;
+            var slot = hilightedSlot;
+            var slotPos = new Vec2(Math.floor(slot.gridPosIndex / (slot.organ.mesh.height + 1)), slot.gridPosIndex % (slot.organ.mesh.height + 1));
+            hilightTexCoord = [slotPos.x / slot.organ.mesh.width, slotPos.y / slot.organ.mesh.height];
+        }
+        this.organs[i].renderer.render(this.organs[i].mesh, worldTransform, hilight, hilightTexCoord);
     }
 };
 

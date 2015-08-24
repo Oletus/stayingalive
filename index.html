@@ -115,7 +115,7 @@ Game.prototype.render = function(ctx) {
         this.glManager.drawFullscreenQuad(SoftBodyRenderer.shader, {u_worldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], u_tex: this.background.texture});
     };
     
-    this.squishyCreature.render(this.getWorldTransform(ctx.canvas));
+    this.squishyCreature.render(this.getWorldTransform(ctx.canvas), this.getHilightedSlot());
 
     // Render HUD stuff
     var worldTransform = this.getWorldTransform(this.ctx2D.canvas);
@@ -187,6 +187,17 @@ Game.prototype.setDraggedParticleForce = function(forceTarget, force) {
         part.externalForceTarget = forceTarget;
         part.externalForce = force;
     }
+};
+
+Game.prototype.getHilightedSlot = function() {
+    if (this.draggedParticle != null && !(this.draggedParticle instanceof Particle)) {
+        var pos = this.getDraggedParticleAsParticle().state.position;
+        var slot = this.squishyCreature.getNearestFreeVeinSlot(pos, 60);
+        if (slot) {
+            return slot;
+        }
+    }
+    return null;
 };
 
 Game.prototype.attachVeinIfPossible = function(veinInfo) {
