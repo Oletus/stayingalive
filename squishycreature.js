@@ -176,8 +176,8 @@ var OrganParameters = [
         // Person at rest uses 0.617 kg of oxygen per day. That's about 0.00001 kg per second.
         // In heavy exercise the amount is around 10x.            
         var maxOxygenation = oxygenInLungs * 0.01 * deltaTime;
-        var availableOxygenCap = Math.max(0, this.contents.getCapacity('oxygen') - this.contents.current['oxygen']);
-        this.contents.give({'oxygen': Math.min(availableOxygenCap, maxOxygenation)});
+        var availableCapacity = Math.max(0, this.contents.getCapacity('oxygen') - this.contents.current['oxygen']);
+        this.contents.give({'oxygen': Math.min(availableCapacity, maxOxygenation)});
         this.innerContents.give(this.contents.take(maxOxygenation, substanceIs('co2')));
     },
     contents: {
@@ -210,16 +210,23 @@ var OrganParameters = [
     image_src: 'o_digestive.png',
     gridSize: {width: 4, height: 6},
     updateMetabolism: function(deltaTime) {
-        // Assume the digestive system uses 5 watts
-        var energy = produceEnergy(5 * deltaTime, this.contents);
+        // Assume the digestive system uses 10 watts
+        var energy = produceEnergy(10 * deltaTime, this.contents);
         passThroughBlood(this.veinSlots, this.contents);
+        
         // Add nutrients to the blood.
+        var nutrientsIn = this.innerContents.current['hamburgers'] * 0.2;
+        var maxAbsorbtion = nutrientsIn * 0.01 * deltaTime * energy;
+        var availableCapacity = Math.max(0, this.contents.current['blood'] * 0.001 - this.contents.current['nutrients']);
+        var tradeAmount = Math.min(availableCapacity, maxAbsorbtion);
+        this.contents.give({'nutrients': tradeAmount});
+        this.innerContents.take(tradeAmount * 5, substanceIs('hamburgers'));
     },
     contents: {
         'blood': 0.5
     },
     innerContents: {
-        'nutrients': 2
+        'hamburgers': 0.5
     },
     defaultVeins: []
 },
@@ -258,14 +265,16 @@ var OrganContents = function(options) {
         'air': 0.0, // liters
         'oxygen': 0.0, // kg
         'co2': 0.0, // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
-        'nutrients': 0.0 // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
+        'nutrients': 0.0, // relative to oxygen - 1 unit of oxygen + nutrients produces 1 unit of co2 (produced water is ignored)
+        'hamburgers': 0.0 // kg
     };
     this.units = {
         'blood': 'l',
         'air': 'l',
         'oxygen': 'kg',
         'co2': 'kg',
-        'nutrients': 'kg'
+        'nutrients': 'kg',
+        'hamburgers': 'kg'
     };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
