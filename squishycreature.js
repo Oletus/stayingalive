@@ -183,7 +183,7 @@ var OrganParameters = [
         this.innerContents.give(this.contents.take(maxOxygenation, substanceIs('co2')));
     },
     contents: {
-        'blood': 0.02
+        'blood': 0.05
     },
     innerContents: {
         'air': 3
