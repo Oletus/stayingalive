@@ -231,7 +231,7 @@ var GamePhysics = function(resizer) {
 
     this.playarea = {
         center: new CVec(0,0),
-        radius: 500,
+        radius: 425,
         state: new State(),
     }
 

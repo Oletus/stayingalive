@@ -259,8 +259,8 @@ var OrganParameters = [
     },
     defaultVeins: [],
     affix: [
-        {point: 0, pos: {x: 550, y: 0}},
-        {point: 1, pos: {x: 480, y: 0}},
+        {point: 0, pos: {x: 450, y: 0}},
+        {point: 1, pos: {x: 380, y: 0}},
     ]
 }
 ];
