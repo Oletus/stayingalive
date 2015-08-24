@@ -416,6 +416,7 @@ var SquishyCreature = function(options) {
         this.organs.push(organ);
     }
     // Add default veins
+    var veinIndex = 0;
     for (var i = 0; i < OrganParameters.length; ++i) {
         var organ = this.organs[i];
         for (var j = 0; j < OrganParameters[i].defaultVeins.length; ++j) {
@@ -426,9 +427,10 @@ var SquishyCreature = function(options) {
                 y: organ.mesh.positions[0].y,
                 width: 15,
                 height: 0,
-                collisionGroup: 1,
+                collisionGroup: 1 + veinIndex,
                 initScale: 25
             });
+            ++veinIndex;
             var vein = new Organ({mesh: veinMesh, physics: this.physics});
             vein.name = 'vein';
             vein.renderer = SquishyCreature.veinRenderer;
