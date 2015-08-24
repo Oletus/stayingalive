@@ -239,9 +239,9 @@ var OrganParameters = [
 {
     name: 'airhose',
     collisionDef: [
-        ' O'
+        'O '
     ],
-    image_src: 'test.png',
+    image_src: 'o_hose.png',
     gridSize: {width: 1, height: 0},
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
@@ -260,8 +260,8 @@ var OrganParameters = [
     innerContentsName: 'airhose',
     defaultVeins: [],
     affix: [
-        {point: 0, pos: {x: 450, y: 0}},
-        {point: 1, pos: {x: 380, y: 0}},
+        {point: 0, pos: {x: 380, y: 0}},
+        {point: 1, pos: {x: 450, y: 0}},
     ]
 }
 ];
