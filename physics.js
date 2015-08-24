@@ -322,6 +322,17 @@ GamePhysics.prototype.renderDebug = function(ctx) {
         ctx.arc(pos.x, pos.y, pos.getRadius(), 0, Math.PI * 2);
         ctx.stroke();
     }
+
+    for (var j = 0; j < this.springs.length; ++j) {
+        var spring = this.springs[j];
+        var pos1 = spring.particle1.point;
+        var pos2 = spring.particle2.point;
+        ctx.strokeStyle = '#0f0';
+        ctx.beginPath();
+        ctx.moveTo(pos1.x, pos1.y);
+        ctx.lineTo(pos2.x, pos2.y);
+        ctx.stroke();
+    }
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#000';
 };
