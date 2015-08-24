@@ -394,8 +394,8 @@ var SquishyCreature = function(options) {
     // Initialize organs
     for (var i = 0; i < OrganParameters.length; ++i) {
         var organMesh = this.physics.generateMesh({
-            x: 0,
-            y: i * 200 - 200, 
+            x: (i % 2) * 250 - 120,
+            y: i * 120 - 250, 
             width: OrganParameters[i].gridSize.width,
             height: OrganParameters[i].gridSize.height,
             collisionGroup: 0,
