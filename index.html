@@ -58,7 +58,7 @@ var Game = function(resizer, physics) {
     });
     this.time = 0;
     
-    this.background = new Sprite('background.png', Sprite.loadAsGLTexture(gl));
+    this.background = new Sprite('background.jpg', Sprite.loadAsGLTexture(gl));
     this.squishyCreature = new SquishyCreature({gl: gl, physics: physics});
     
     this.draggedParticle = null;
