@@ -243,15 +243,15 @@ var GamePhysics = function(resizer) {
     this.debug.particles.show = false;
     if (DEV_MODE) {
         this.debug.particles.show = true;
-    }
 
-    var datinst = dat.instance;
-    var gui = datinst.addFolder('Physics');
-    var f1 = gui.addFolder('Springs');
-    f1.add(this.debug.springs, 'show');
-    f1.addColor(this.debug.springs, 'color');
-    var f2 = gui.addFolder('Particles');
-    f2.add(this.debug.particles, 'show');
+        var datinst = dat.instance;
+        var gui = datinst.addFolder('Physics');
+        var f1 = gui.addFolder('Springs');
+        f1.add(this.debug.springs, 'show');
+        f1.addColor(this.debug.springs, 'color');
+        var f2 = gui.addFolder('Particles');
+        f2.add(this.debug.particles, 'show');
+    }
 };
 
 GamePhysics.prototype.render = function(ctx) {
