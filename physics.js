@@ -323,6 +323,7 @@ GamePhysics.prototype.renderDebug = function(ctx) {
         ctx.stroke();
     }
     ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
 };
 
 GamePhysics.prototype.renderDebugGrid = function(ctx, grid) {
