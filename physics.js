@@ -1,13 +1,5 @@
 'use strict';
 
-var DebugSettings = function() {
-    this.springs = {};
-    this.particles = {};
-    this.springs.show = false;
-    this.springs.color = '#0f0';
-    this.particles.show = false;
-}
-
 var Point = function(grid, x, y, radius) {
     this.grid = grid;
     this.x = x;
@@ -243,12 +235,18 @@ var GamePhysics = function(resizer) {
         state: new State(),
     }
 
-    this.debug = new DebugSettings();
+    this.debug = {};
+    this.debug.springs = {};
+    this.debug.particles = {};
+    this.debug.springs.show = false;
+    this.debug.springs.color = '#0f0';
+    this.debug.particles.show = false;
     if (DEV_MODE) {
-        this.debug.springs.show = false;
         this.debug.particles.show = true;
     }
-    var gui = new dat.GUI();
+
+    var datinst = dat.instance;
+    var gui = datinst.addFolder('Physics');
     var f1 = gui.addFolder('Springs');
     f1.add(this.debug.springs, 'show');
     f1.addColor(this.debug.springs, 'color');

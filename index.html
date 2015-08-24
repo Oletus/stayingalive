@@ -213,6 +213,8 @@ var DEV_MODE = (window.location.href.indexOf("?devMode") != -1);
 var start = function() {
     var DEBUG_MAIN_LOOP = DEV_MODE && true; // Set to true to allow fast-forwarding main loop with 'f'
     Audio.muteAll(DEV_MODE && false); // Set to true if sounds annoy developers
+    dat.instance = new dat.GUI();
+    if (!DEV_MODE) dat.GUI.toggleHide();
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
     var physics = new GamePhysics(resizer);
