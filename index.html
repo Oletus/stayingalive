@@ -130,8 +130,8 @@ Game.prototype.render = function(ctx) {
     this.ctx2D.scale(scaleX, -scaleY);
 
     //TODO: It'd be nice to just have a list of things to loop through, here
-    this.squishyCreature.renderHUD(this.ctx2D);
     this.physics.renderHUD(this.ctx2D);
+    this.squishyCreature.renderHUD(this.ctx2D);
 
     this.ctx2D.restore();
     
@@ -214,7 +214,7 @@ var start = function() {
     var DEBUG_MAIN_LOOP = DEV_MODE && true; // Set to true to allow fast-forwarding main loop with 'f'
     Audio.muteAll(DEV_MODE && false); // Set to true if sounds annoy developers
     dat.instance = new dat.GUI();
-    if (!DEV_MODE) dat.GUI.toggleHide();
+    //if (!DEV_MODE) dat.GUI.toggleHide();
 
     var resizer = new CanvasResizer({mode: CanvasResizer.Mode.FIXED_RESOLUTION_INTERPOLATED, width: 1280, height: 720});
     var physics = new GamePhysics(resizer);
