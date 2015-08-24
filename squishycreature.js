@@ -585,6 +585,8 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
         ctx2d.save();
         ctx2d.translate(pos.x, pos.y);
         ctx2d.scale(1, -1);
+        ctx2d.lineWidth = 3;
+        ctx2d.strokeText(line, 0, 0);
         ctx2d.fillText(line, 0, 0);
         pos.y += 20;
         ctx2d.restore();
@@ -610,9 +612,11 @@ SquishyCreature.prototype.renderHUD = function(ctx2d) {
         var posIndex = Math.floor(this.organs[i].mesh.positions.length * 0.5);
         var pos = this.organs[i].mesh.positions[posIndex];
 
-        ctx2d.font = 'bold 15px sans-serif';
+        ctx2d.font = 'bold 15px monospace';
+        
+        ctx2d.strokeStyle = '#000';
 
-        ctx2d.fillStyle = '#f00';
+        ctx2d.fillStyle = '#f08';
         
         printCurrentContents(this.organs[i].contents);
 
