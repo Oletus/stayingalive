@@ -67,7 +67,7 @@ var Game = function(resizer, physics) {
             that.setDraggedParticleForce(null, 0);
         }
         CanvasUI.prototype.down.apply(that.canvasUI, arguments);
-        var veinInfo = that.squishyCreature.getNearestVeinEnding(vec, 50);
+        var veinInfo = that.squishyCreature.getNearestVeinEnding(vec, 35);
         var part = that.physics.getNearestParticle(vec, 60);
         if (veinInfo) {
             that.draggedParticle = veinInfo;
