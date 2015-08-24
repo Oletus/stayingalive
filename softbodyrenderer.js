@@ -76,7 +76,20 @@ SoftBodyRenderer.pushExtendedGridCoords = function(target, targetTexCoords, arrI
         var xInner = x2 == 0 ? 1 : x2 - 1;
         var yInner = y2 == 0 ? 1 : y2 - 1;
         if (xInner < 0 || yInner < 0 || xInner > grid.width || yInner > grid.height) {
-            var diff = new Vec2(0, 0);
+            if (xInner < 0 || xInner > grid.width) {
+                throw 'tubes must be horizontal!';
+            }
+            yInner = 0;
+            var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
+            var posDiff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
+            var angle = posDiff.angle();
+            if ((y == 0) == (x == 0)) {
+                angle += Math.PI * 0.5; // normal angle
+            } else {
+                angle -= Math.PI * 0.5; // normal angle
+            }
+            var diff = new Vec2(Math.cos(angle), Math.sin(angle));
+            diff.scale(pos.getRadius());
         } else {
             var posInner = SoftBodyRenderer.getGridPosition(grid, xInner, yInner);
             var diff = new Vec2(pos.x - posInner.x, pos.y - posInner.y);
