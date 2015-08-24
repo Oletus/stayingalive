@@ -160,7 +160,7 @@ Game.prototype.render = function(ctx) {
         } else {
             drawText(this.ctx2D, 'Release vein over a slot to connect', 0, 0, true);
         }
-    } else if (!this.hasAttached && this.time > 10) {
+    } else if (!this.hasAttached && this.time > 20) {
         drawText(this.ctx2D, 'Drag veins by their ends to detach and attach them', 0, 0, true);
     } else {
         this.squishyCreature.renderHUD(this.ctx2D);
@@ -302,7 +302,7 @@ var initGUI = function() {
     f1.add(SquishyCreature.debug, 'Show veins');
     f1.add(SquishyCreature.debug, 'Show organs');
     
-    datinst.add({'Scramble veins':function() { game.squishyCreature.scrambleVeins(); }}, 'Scramble veins');
+    datinst.add({'Scramble veins':function() { game.squishyCreature.scrambleVeins(); game.hasAttached = true; }}, 'Scramble veins');
     
     datinst.add({'Reset':function() { game.initCreature(); }}, 'Reset');
     
