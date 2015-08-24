@@ -1,12 +1,9 @@
 'use strict';
 
-/*[
-'xx  ',
-'xxx ',
-'xxxx',
-'xxxx',
-' xxx',
-]*/
+// http://biology.stackexchange.com/questions/2841/total-amount-of-co%E2%82%82-oxygen-in-bloodstream-in-humans
+// oxygen per blood carried by hemoglobin: 0.00070 kg / 1.0l
+// oxygen diffused in blood: 0.00035 kg / 1.0l
+// total around: 0.001 kg / 1.0l
 
 var substanceIs = function(match) {
     if (match instanceof Array) {
@@ -23,7 +20,7 @@ var OrganParameters = [
     gridSize: {width: 2, height: 2},
     collisionDef: [
         'oo ',
-        'oox',
+        'iix',
         'xxx',
     ],
     updateMetabolism: function(deltaTime) {
@@ -91,10 +88,14 @@ var OrganParameters = [
                 this.innerContents.take(-airIntake, substanceIs(['co2', 'air']));
             }
             // Oxygenate the blood and remove CO2.
-            // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight. Also adjust by amount of blood to oxygenate.
-            var oxygenation = this.innerContents.current['air'] * 0.001225 * 0.23 * this.contents.current['blood'] * deltaTime;
-            this.contents.give({'oxygen': oxygenation});
-            this.innerContents.give(this.contents.take(oxygenation, substanceIs('co2')));
+            // Air is about 0.001225 kg / liter. 23% of air is oxygen by weight.
+            var oxygenInLungs = this.innerContents.current['air'] * 0.001225 * 0.23;
+            // Person at rest uses 0.617 kg of oxygen per day. That's about 0.00001 kg per second.
+            // In heavy exercise the amount is around 10x.            
+            var maxOxygenation = oxygenInLungs * 0.01 * deltaTime;
+            var availableOxygenCap = Math.max(0, this.contents.getCapacity('oxygen') - this.contents.current['oxygen']);
+            this.contents.give({'oxygen': Math.min(availableOxygenCap, maxOxygenation)});
+            this.innerContents.give(this.contents.take(maxOxygenation, substanceIs('co2')));
         }
     },
     contents: {
@@ -141,9 +142,17 @@ var OrganContents = function(options) {
     };
     this.current = {};
     objectUtil.initWithDefaults(this.current, defaults, options);
+    // blood starts out oxygenated
+    this.current['oxygen'] = this.getCapacity('oxygen');
     this.initialTotal = this.total();
     this.initial = {};
-    objectUtil.initWithDefaults(this.initial, defaults, options);
+    objectUtil.initWithDefaults(this.initial, defaults, this.current);
+};
+
+OrganContents.prototype.getCapacity = function(key) {
+    if (key == 'oxygen') {
+        return this.current['blood'] * 0.001;
+    }
 };
 
 OrganContents.prototype.take = function(amount, filterFunc) {
