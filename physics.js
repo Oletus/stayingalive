@@ -5,7 +5,7 @@ var DebugSettings = function() {
     this.particles = {};
     this.springs.show = false;
     this.springs.color = '#0f0';
-    this.particles.show = true;
+    this.particles.show = false;
 }
 
 var Point = function(grid, x, y, radius) {
@@ -244,6 +244,10 @@ var GamePhysics = function(resizer) {
     }
 
     this.debug = new DebugSettings();
+    if (DEV_MODE) {
+        this.debug.springs.show = false;
+        this.debug.particles.show = true;
+    }
     var gui = new dat.GUI();
     var f1 = gui.addFolder('Springs');
     f1.add(this.debug.springs, 'show');
