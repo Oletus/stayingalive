@@ -22,9 +22,9 @@ var OrganParameters = [
     image_src: 'o_heart.png',
     gridSize: {width: 2, height: 2},
     collisionDef: [
-        'xxx',
-        'xxx',
         'xx ',
+        'xxx',
+        'xxx',
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
@@ -60,11 +60,11 @@ var OrganParameters = [
     image_src: 'o_lung_single.png',
     gridSize: {width: 3, height: 4},
     collisionDef: [
-        '  xx',
-        ' xxx',
-        'xxxx',
-        'xxx ',
         'xx  ',
+        'xxx ',
+        'xxxx',
+        ' xxx',
+        '  xx',
     ],
     updateMetabolism: function(deltaTime) {
         if (this.veins.length > 0) {
