@@ -227,6 +227,16 @@ ShaderProgram.vertexLibrary = {
  * Sources for simple utility fragment shaders.
  */
 ShaderProgram.fragmentLibrary = {
+    textured: [
+        'precision highp float;',
+        'uniform sampler2D uTex;',
+        'varying vec2 vTexCoord;',
+        'void main() {',
+        '    vec4 texColor = texture2D(uTex, vTexCoord);',
+        '    gl_FragColor = texColor;',
+        '}'
+    ].join('\n'),
+
     texturedHilighted: [
         'precision highp float;',
         'uniform sampler2D uTex;',
