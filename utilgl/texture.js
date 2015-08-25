@@ -1,8 +1,10 @@
 'use strict';
 
+if (typeof Sprite !== 'undefined') {
 /**
  * @return {function} Filter to create a GL texture from a Sprite.
  * Will set 'texture' property on the Sprite that can then be used to draw.
+ * The texture will have linear filtering, so NPOT images can be used.
  */
 Sprite.loadAsGLTexture = function(gl) {
     return function(sprite) {
@@ -17,6 +19,7 @@ Sprite.loadAsGLTexture = function(gl) {
         sprite.texture = tex;
     };
 };
+}
 
 var textureUtil = {};
 

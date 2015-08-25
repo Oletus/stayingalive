@@ -15,8 +15,7 @@ var glUtils = {
     maxVaryingVectors: 8, // minimum mandated by the spec
     maxUniformVectors: 16, // minimum mandated by the spec for the fragment shader
     maxTextureUnits: 32,
-    maxFramebufferSize: 2048,
-    textureUnits: null
+    maxFramebufferSize: 2048
 };
 
 /**
@@ -102,32 +101,23 @@ var glStateManager = function(gl) {
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-    var useQuadVertexBufferInternal = function(useTexCoordBuffer) {
+    var useQuadPositionBufferInternal = function(attribLocation) {
+        if (attribLocation === undefined) {
+            attribLocation = 0;
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadVertexBuffer);
-        var positionAttribLocation = 0;
-        gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
-        if (useTexCoordBuffer === true) {
-            var texCoordAttribLocation = 1;
-            gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadTexCoordBuffer);
-            gl.vertexAttribPointer(texCoordAttribLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(attribLocation, 2, gl.FLOAT, false, 0, 0);
+    };
+    
+    var useQuadTexCoordBufferInternal = function(attribLocation) {
+        if (attribLocation === undefined) {
+            attribLocation = 1;
         }
+        gl.bindBuffer(gl.ARRAY_BUFFER, unitQuadTexCoordBuffer);
+        gl.vertexAttribPointer(attribLocation, 2, gl.FLOAT, false, 0, 0);
     };
 
-    var drawFullscreenQuadInternal = function(program, uniforms) {
-        program.use(uniforms);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    };
-
-    var drawRectInternal = function(program, uniforms, rect) {
-        if (rect !== undefined) {
-            uniforms['uScale'] = [rect.width() / gl.drawingBufferWidth, rect.height() / gl.drawingBufferHeight];
-            // Without any translation, the scaled rect would be centered in the gl viewport.
-            // uTranslate = rect center point in gl coordinates.
-            var rectCenter = new Vec2(rect.left + rect.width() * 0.5, rect.top + rect.height() * 0.5);
-            rectCenter.x = (rectCenter.x / gl.drawingBufferWidth) * 2 - 1;
-            rectCenter.y = (1 - rectCenter.y / gl.drawingBufferHeight) * 2 - 1;
-            uniforms['uTranslate'] = [rectCenter.x, rectCenter.y];
-        }
+    var drawQuadInternal = function(program, uniforms) {
         program.use(uniforms);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
@@ -148,9 +138,9 @@ var glStateManager = function(gl) {
 
     return {
         shaderProgram: ShaderProgram.createCache(gl),
-        useQuadVertexBuffer: useQuadVertexBufferInternal,
-        drawFullscreenQuad: drawFullscreenQuadInternal,
-        drawRect: drawRectInternal,
+        useQuadPositionBuffer: useQuadPositionBufferInternal,
+        useQuadTexCoordBuffer: useQuadTexCoordBufferInternal,
+        drawQuad: drawQuadInternal,
         useFbo: useFboInternal,
         useFboTex: useFboTexInternal
     };

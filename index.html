@@ -135,8 +135,9 @@ Game.prototype.render = function(ctx) {
     gl.clear(gl.COLOR_BUFFER_BIT);*/
     
     if (this.background.loaded) {
-        this.glManager.useQuadVertexBuffer(true);
-        this.glManager.drawFullscreenQuad(SoftBodyRenderer.shader, {uWorldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], uTex: this.background.texture});
+        this.glManager.useQuadPositionBuffer();
+        this.glManager.useQuadTexCoordBuffer();
+        this.glManager.drawQuad(SoftBodyRenderer.shader, {uWorldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], uTex: this.background.texture});
     };
     
     this.squishyCreature.render(this.getWorldTransform(ctx.canvas), this.getHilightedSlot());
@@ -177,8 +178,9 @@ Game.prototype.render = function(ctx) {
     
     gl.bindTexture(gl.TEXTURE_2D, this.canvas2DTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.canvas2D);
-    this.glManager.useQuadVertexBuffer(true);
-    this.glManager.drawFullscreenQuad(SoftBodyRenderer.shader, {uWorldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], uTex: this.canvas2DTexture});
+    this.glManager.useQuadPositionBuffer();
+    this.glManager.useQuadTexCoordBuffer();
+    this.glManager.drawQuad(SoftBodyRenderer.shader, {uWorldTransform: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], uTex: this.canvas2DTexture});
     
     return ctx;
 };
