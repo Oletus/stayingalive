@@ -20,52 +20,6 @@ var glUtils = {
 };
 
 /**
- * Create a texture and initialize it to use gl.NEAREST filtering and
- * gl.CLAMP_TO_EDGE clamping.
- * @param {WebGLRenderingContext} gl The WebGL context.
- * @param {number} width Width of the texture. Must be an integer.
- * @param {number} height Height of the texture. Must be an integer.
- * @param {GLenum=} format Texture format. Defaults to gl.RGBA.
- * @param {GLenum=} type Texture type. Defaults to gl.UNSIGNED_BYTE.
- * @return {WebGLTexture} The created texture.
- */
-glUtils.createTexture = function(gl, width, height, format, type) {
-    if (format === undefined) {
-        format = gl.RGBA;
-    }
-    if (type === undefined) {
-        type = gl.UNSIGNED_BYTE;
-    }
-    var tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, type,
-                  null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    return tex;
-};
-
-/**
- * @return {function} Filter to create a GL texture from a Sprite.
- */
-Sprite.loadAsGLTexture = function(gl) {
-    return function(sprite) {
-        var tex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sprite.img);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        sprite.texture = tex;
-    };
-};
-
-/**
  * Create a WebGL context on a canvas element.
  * @param {HTMLCanvasElement} canvas The canvas element.
  * @param {Object} contextAttribs The context attributes to pass to the created
@@ -219,7 +173,7 @@ var glStateManager = function(gl) {
     } else {
         // It's possible that float textures are supported but float FBOs are not.
         var testFbo = gl.createFramebuffer();
-        var testTex = glUtils.createTexture(gl, 128, 128, gl.RGBA, gl.FLOAT);
+        var testTex = textureUtil.createTexture(gl, 128, 128, gl.RGBA, gl.FLOAT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, testFbo);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, testTex, 0);
         if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
@@ -231,6 +185,9 @@ var glStateManager = function(gl) {
                                          gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS));
     console.log(glUtils.maxUniformVectors);
     glUtils.maxTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+    if (typeof ShaderProgram != 'undefined') {
+        ShaderProgram.maxTextureUnits = glUtils.maxTextureUnits;
+    }
     // Do a best effort at determining framebuffer size limits:
     var maxFramebufferSizes = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
     glUtils.maxFramebufferSize = Math.min(maxFramebufferSizes[0],
@@ -241,16 +198,6 @@ var glStateManager = function(gl) {
     // Memory limits are an issue, so additionally limit to 2048 at least for
     // now...
     glUtils.maxFramebufferSize = Math.min(2048, glUtils.maxFramebufferSize);
-    glUtils.textureUnits = [gl.TEXTURE0, gl.TEXTURE1, gl.TEXTURE2, gl.TEXTURE3,
-                            gl.TEXTURE4, gl.TEXTURE5, gl.TEXTURE6, gl.TEXTURE7,
-                            gl.TEXTURE8, gl.TEXTURE9, gl.TEXTURE10,
-                            gl.TEXTURE11, gl.TEXTURE12, gl.TEXTURE13,
-                            gl.TEXTURE14, gl.TEXTURE15, gl.TEXTURE16,
-                            gl.TEXTURE17, gl.TEXTURE18, gl.TEXTURE19,
-                            gl.TEXTURE20, gl.TEXTURE21, gl.TEXTURE22,
-                            gl.TEXTURE23, gl.TEXTURE24, gl.TEXTURE25,
-                            gl.TEXTURE26, gl.TEXTURE27, gl.TEXTURE28,
-                            gl.TEXTURE29, gl.TEXTURE30, gl.TEXTURE31];
 })();
 
 glUtils.matrixInverse = function(matrix, result) {

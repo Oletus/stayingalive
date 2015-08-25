@@ -114,8 +114,8 @@ ShaderProgram.prototype.use = function(uniforms) {
             var gltype = this.uniforms[key].gltype;
             var location = this.uniforms[key].location;
             if (gltype === 'tex2d') {
-                if (texU < glUtils.maxTextureUnits) {
-                    this.gl.activeTexture(glUtils.textureUnits[texU]);
+                if (texU < ShaderProgram.maxTextureUnits) {
+                    this.gl.activeTexture(ShaderProgram.textureUnits[texU]);
                 } else {
                     console.log('Too many textures in ShaderProgram.use');
                     return;
@@ -241,3 +241,13 @@ ShaderProgram.fragmentLibrary = {
         '}'
     ].join('\n')
 };
+
+ShaderProgram.textureUnits = []; // GL_TEXTURE* enums for easy access.
+ShaderProgram.maxTextureUnits = 32; // Will be filled in by feature detection in utilgl.js
+
+(function() {
+    var firstUnit = 0x84C0;
+    for (var i = 0; i < 32; ++i) {
+        ShaderProgram.textureUnits.push(firstUnit + i);
+    }
+})();
