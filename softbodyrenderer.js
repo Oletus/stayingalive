@@ -224,5 +224,9 @@ SoftBodyRenderer.loadShaders = function(gl) {
         'u_hilight': '1f',
         'u_hilightTexCoord': '2fv'
     };
-    SoftBodyRenderer.shader = new ShaderProgram(gl, SoftBodyRenderer.fragmentSrc, SoftBodyRenderer.vertexSrc, uniforms);
+    var attributes = {
+        'aVertexPosition': 0,
+        'a_texCoord': 1
+    };
+    SoftBodyRenderer.shader = new ShaderProgram(gl, SoftBodyRenderer.fragmentSrc, SoftBodyRenderer.vertexSrc, uniforms, attributes);
 };
