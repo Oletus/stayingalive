@@ -30,7 +30,7 @@ SoftBodyRenderer.prototype.render = function(grid, worldTransform, hilight, hili
     
     var gl = this.gl;
     
-    SoftBodyRenderer.shader.use({'u_tex': this.sprite.texture, 'u_worldTransform': worldTransform, 'u_hilight': hilight, 'u_hilightTexCoord': hilightTexCoord});
+    SoftBodyRenderer.shader.use({'uTex': this.sprite.texture, 'uWorldTransform': worldTransform, 'uHilight': hilight, 'uHilightTexCoord': hilightTexCoord});
     
     var triangleCount = 4 * (grid.width + 1) * (grid.height + 1);
     var vertexCount = triangleCount * 3;
@@ -192,41 +192,20 @@ SoftBodyRenderer.pushGridCoords = function(target, targetTexCoords, arrInd, grid
     }
 };
 
-SoftBodyRenderer.vertexSrc = [
-'attribute vec2 aVertexPosition;',
-'attribute vec2 a_texCoord;',
-'uniform mat4 u_worldTransform;',
-'varying vec2 v_texCoord;',
-'void main() {',
-'    gl_Position = u_worldTransform * vec4(aVertexPosition, 0.0, 1.0);',
-'    v_texCoord = a_texCoord;',
-'}'
-].join('\n');
+SoftBodyRenderer.vertexSrc = ShaderProgram.vertexLibrary.textured;
 
-SoftBodyRenderer.fragmentSrc = [
-'precision highp float;',
-'uniform sampler2D u_tex;',
-'uniform float u_hilight;',
-'uniform vec2 u_hilightTexCoord;',
-'varying vec2 v_texCoord;',
-'void main() {',
-'    vec4 texColor = texture2D(u_tex, v_texCoord);',
-'    float hilightMul = clamp(1.0 - distance(v_texCoord, u_hilightTexCoord) * 2.0, 0.0, 1.0);',
-'    vec4 hilightCol = vec4(vec3(u_hilight * hilightMul), 0);',
-'    gl_FragColor = texColor + hilightCol;',
-'}'
-].join('\n');
+SoftBodyRenderer.fragmentSrc = ShaderProgram.fragmentLibrary.texturedHilighted;
 
 SoftBodyRenderer.loadShaders = function(gl) {
     var uniforms = {
-        'u_tex': 'tex2d',
-        'u_worldTransform': 'Matrix4fv',
-        'u_hilight': '1f',
-        'u_hilightTexCoord': '2fv'
+        'uTex': 'tex2d',
+        'uWorldTransform': 'Matrix4fv',
+        'uHilight': '1f',
+        'uHilightTexCoord': '2fv'
     };
     var attributes = {
         'aVertexPosition': 0,
-        'a_texCoord': 1
+        'aTexCoord': 1
     };
     SoftBodyRenderer.shader = new ShaderProgram(gl, SoftBodyRenderer.fragmentSrc, SoftBodyRenderer.vertexSrc, uniforms, attributes);
 };

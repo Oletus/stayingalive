@@ -206,3 +206,38 @@ ShaderProgram.createCache = function(gl) {
         return shader;
     };
 };
+
+/**
+ * Sources for simple utility vertex shaders.
+ */
+ShaderProgram.vertexLibrary = {
+    textured: [
+        'attribute vec2 aVertexPosition;',
+        'attribute vec2 aTexCoord;',
+        'uniform mat4 uWorldTransform;',
+        'varying vec2 vTexCoord;',
+        'void main() {',
+        '    gl_Position = uWorldTransform * vec4(aVertexPosition, 0.0, 1.0);',
+        '    vTexCoord = aTexCoord;',
+        '}'
+    ].join('\n')
+};
+
+/**
+ * Sources for simple utility fragment shaders.
+ */
+ShaderProgram.fragmentLibrary = {
+    texturedHilighted: [
+        'precision highp float;',
+        'uniform sampler2D uTex;',
+        'uniform float uHilight;',
+        'uniform vec2 uHilightTexCoord;',
+        'varying vec2 vTexCoord;',
+        'void main() {',
+        '    vec4 texColor = texture2D(uTex, vTexCoord);',
+        '    float hilightMul = clamp(1.0 - distance(vTexCoord, uHilightTexCoord) * 2.0, 0.0, 1.0);',
+        '    vec4 hilightCol = vec4(vec3(uHilight * hilightMul), 0);',
+        '    gl_FragColor = texColor + hilightCol;',
+        '}'
+    ].join('\n')
+};
